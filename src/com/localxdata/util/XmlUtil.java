@@ -2,7 +2,6 @@ package com.localxdata.util;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -10,39 +9,25 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStreamWriter;
-import java.io.RandomAccessFile;
-import java.io.Writer;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.lang.reflect.Member;
-import java.nio.ByteBuffer;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel;
 import java.util.ArrayList;
-import java.util.Arrays;
+
 import java.util.HashMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Iterator;
+import java.util.Map;
 
 import javax.xml.parsers.*;
-import javax.xml.transform.Result;
-import javax.xml.transform.Source;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMResult;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.Document;
-import org.w3c.dom.Node;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
-import java.nio.BufferOverflowException;
 
+import com.localxdata.config.ConfigNozzle;
+import com.localxdata.storage.DataCellList;
+import com.localxdata.struct.DataCell;
+import com.localxdata.struct.DataTableControl;
 import com.localxdata.struct.ObjectMemberStruct;
 
 public class XmlUtil {
@@ -67,9 +52,17 @@ public class XmlUtil {
     public static final String FILE_EXTENSION = ".";
     public static final String XML_FILE_TAG = ".xml";
 
-    // Xml Element
-    public static final String ELEMENT_TAG_DATA = "data";
-    public static final String ELEMENT_TAG_ATTR = "attr";
+    // data Xml Element
+    public static final String DATA_ELEMENT_TAG_DATA = "data";
+    public static final String DATA_ELEMENT_TAG_ATTR = "attr";
+    
+    // data table Xml Element
+    public static final String TABLE_ELEMENT_TAG_RECORD = "records";
+    public static final String TABLE_ELEMENT_TAG_DATA = "data";
+    public static final String TABLE_ELEMENT_TAG_TAB = "tab";
+    public static final String TABLE_ELEMENT_TAG_START = "start";
+    public static final String TABLE_ELEMENT_TAG_END = "end";
+    
 
     // Xml length
     public static final int MAX_DB_SIZE = 0xFFF; // 128 Mb
@@ -112,7 +105,7 @@ public class XmlUtil {
     private static final int STATUS_FIND_TAG_FINAL_START = 7;
     private static final int STATUS_FIND_TAG_FINAL_END = 8;
 
-    private HashMap<String, ArrayList<Object>> mDataListMap;
+    //private HashMap<String, ArrayList<DataCell>> mDataListMap;
 
     private String root = "";
 
@@ -137,55 +130,16 @@ public class XmlUtil {
         return mInstance;
     }
 
-    public void setXmlRootDir(String path) {
-        root = path;
-    }
-
-    public int CreateXml(String filename) {
-        File file = new File(root + filename + XML_FILE_TAG);
-
-        if (!file.exists() || !file.isFile()) {
-            try {
-                file.createNewFile();
-            } catch (IOException e) {
-                return RESULT_CREATE_FAIL_FILE_EXISTS;
-            }
-        }
-
-        StreamResult streamResult = new StreamResult(file);
-        Source inputSource = new DOMSource(mDoc);
-        TransformerFactory transformerFactory = TransformerFactory
-                .newInstance();
-        Transformer transformer;
-
-        try {
-            transformer = transformerFactory.newTransformer();
-            transformer.transform(inputSource, streamResult);
-        } catch (TransformerConfigurationException e) {
-            return RESULT_CREATE_FAIL_TRANFORM_CONFIG_ERROR;
-        } catch (TransformerException e) {
-            return RESULT_CREATE_FAIL_TRANFORM_ERROR;
-        }
-
-        return RESULT_CREATE_SUCCESS;
-    }
-
-    @SuppressWarnings("unchecked")
-    public int CreateXml(ArrayList data) {
-        Object obj = data.get(0);
-
-        String tableName = PraseParamUtil.PraseObjectName(obj);
+    public int createDataXml(String className,DataCellList datalist,int blockNum) {
+        Object obj = datalist.get(0).obj;
 
         int result = RESULT_CREATE_SUCCESS;
 
-        // wangsl
-        // ArrayList<String>column = PraseParamUtil.PraseObjectMember(obj);
         ArrayList<ObjectMemberStruct> column = PraseParamUtil
                 .PraseObjectMember(obj);
-        // wagnsl
 
         try {
-            result = WriteXmlForNew(tableName, data, column);
+            result = WriteXmlForNew(className, datalist, column,blockNum);
         } catch (IOException e) {
             return RESULT_CREATE_FAIL_TRANFORM_ERROR;
         }
@@ -197,44 +151,96 @@ public class XmlUtil {
         return RESULT_WRITE_SUCCESS;
     }
 
-    public HashMap<String, ArrayList<Object>> LoadAllXml() {
-        if (mDataListMap != null) {
-            return mDataListMap;
+    public int createDataXml(String className,DataCellList datalist,DataCell startCell,DataCell endCell,int blockNum) {
+    	Object obj = datalist.get(0).obj;
+
+        int result = RESULT_CREATE_SUCCESS;
+
+        ArrayList<ObjectMemberStruct> column = PraseParamUtil
+                .PraseObjectMember(obj);
+
+        try {
+        	String fileName =  ConfigNozzle.getLocalDataEngineRoot() 
+                                   + className 
+                                   + "_" 
+                                   + blockNum 
+                                   + ".xml";
+
+            //int startIndex = ConfigNozzle.getDataMaxFileRecord()*blockNum;
+        	int startIndex = datalist.indexOf(startCell);
+        	int endIndex = datalist.indexOf(endCell);
+        	
+            WriteXml(className,
+	                 fileName,
+	                 datalist,
+	                 column,
+	                 startIndex,
+	                 endIndex);
+        } catch (IOException e) {
+            return RESULT_CREATE_FAIL_TRANFORM_ERROR;
         }
 
-        File directory = new File(root);
-        File file = new File(directory.getAbsolutePath());
-        mDataListMap = new HashMap<String, ArrayList<Object>>();
+        if (result != RESULT_WRITE_SUCCESS) {
+            return result;
+        }
 
-        File[] files = file.listFiles();
-
-        for (File f : files) {
-            if (f.isFile()) {
-                String fileName = f.getName();
-
-                if (fileName.endsWith(XML_FILE_TAG)) {
-                    String tableName = fileName.substring(0, fileName
-                            .lastIndexOf(FILE_EXTENSION));
-                    // mDataListMap.put(tableName, LoadXml(tableName));
-                    mDataListMap.put(tableName, LoadXml_Sax(tableName));
-
+        return RESULT_WRITE_SUCCESS;
+    }
+    
+    
+    public int updateDataXml(String className,DataCellList datalist,DataCell startCell,DataCell endCell,int blockNum) {
+    	
+    	 Object obj = datalist.get(0).obj;
+    	 
+    	 ArrayList<ObjectMemberStruct> column = PraseParamUtil
+         .PraseObjectMember(obj);
+    	 
+    	try {
+			this.WriteXmlForUpdate(className, datalist, column, startCell, endCell,blockNum);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+    	
+    	return RESULT_WRITE_SUCCESS;
+    }
+    
+    
+    /**
+     * We use btree to save xml,so the file name will be remodified like this
+     * class:
+     * com.sample.data =>com.sample.data_1.xml/com.sample.data_2.xml/.......
+     * 
+     * @return
+     */
+    public void LoadAllDataXml(HashMap<String, DataCellList> dataListMap,ArrayList<String>files) {
+        for (String f : files) {
+            String fileName = f;
+            
+            if (fileName.endsWith(XML_FILE_TAG)) {
+                String tableName = XmlUtil.getInstance().transformClassName(fileName);//fileName.substring(0, lastIndex);
+                // mDataListMap.put(tableName, LoadXml(tableName));
+                // mDataListMap.put(tableName, LoadXml_Ex(tableName));
+                DataCellList list = dataListMap.get(tableName);
+                if(list == null) {
+                    dataListMap.put(tableName, LoadDataXml_Sax(tableName,fileName));
+                }else {
+                    DataCellList loadResult = LoadDataXml_Sax(tableName,fileName);
+                    if(loadResult != null && loadResult.size() != 0) {
+                        list.addAll(loadResult);
+                        dataListMap.put(tableName, list);
+                    }
                 }
             }
         }
-        return mDataListMap;
     }
 
-    public ArrayList<Object> LoadXml(String className) {
+    
+    public DataCellList LoadDataXml(String className) {
 
         long current = System.currentTimeMillis();
         LogUtil.d(TAG, "LoadXml start at " + current);
 
-        ArrayList<Object> list = mDataListMap.get(className);
-        if (list != null) {
-            return list;
-        }
-
-        list = new ArrayList<Object>();
+        DataCellList list = new DataCellList();
 
         try {
             Document doc = mBuilder.parse(root + className + XML_FILE_TAG);
@@ -267,17 +273,13 @@ public class XmlUtil {
             }
             constructor.setAccessible(true);
 
-            // We should create index.......
-            boolean isFirst = true;
-            // We should create index.......
-
             for (int j = 0; j < elementList.getLength(); j++) {
                 Object membet = constructor.newInstance();
                 Field[] fieldlist = membet.getClass().getDeclaredFields();
 
                 Element node = (Element) elementList.item(j);
 
-                if (!node.getNodeName().equals(ELEMENT_TAG_DATA)) {
+                if (!node.getNodeName().equals(DATA_ELEMENT_TAG_DATA)) {
                     continue;
                 }
 
@@ -288,12 +290,9 @@ public class XmlUtil {
                     for (Field field : fieldlist) {
                         if (dataNode.getNodeName().equals(field.getName())) {
                             field.setAccessible(true);
-                            // wangsl
-                            // We should create index.......
-                            // TODO
-                            // wangsl
+                            
                             switch (PraseParamUtil.PraseObjectType(dataNode
-                                    .getAttribute(ELEMENT_TAG_ATTR))) {
+                                    .getAttribute(DATA_ELEMENT_TAG_ATTR))) {
                             case PraseParamUtil.PRASE_TYPE_INT:
                                 int intValue = Integer.valueOf(dataNode
                                         .getTextContent());
@@ -327,7 +326,8 @@ public class XmlUtil {
                         }
                     }
                 }
-                list.add(membet);
+                
+                list.add(new DataCell(membet));
             }
         } catch (SAXException e) {
             e.printStackTrace();
@@ -341,16 +341,17 @@ public class XmlUtil {
                 + (System.currentTimeMillis() - current));
         return list;
     }
+    
 
     // this function is faster....
-    public ArrayList<Object> LoadXml_Ex(String className) {
+    private DataCellList LoadDataXml_Ex(String className) {
         long current = System.currentTimeMillis();
         LogUtil.d(TAG, "LoadXml_Ex start at " + current);
 
-        ArrayList<Object> list = mDataListMap.get(className);
-        if (list != null) {
-            return list;
-        }
+        //ArrayList<Object> list = mDataListMap.get(className);
+        //if (list != null) {
+        //    return list;
+        //}
 
         Class clazz;
         try {
@@ -384,13 +385,12 @@ public class XmlUtil {
 
         FileReader fileReader;
 
-        list = new ArrayList<Object>();
+        DataCellList list = new DataCellList();
         try {
             fileReader = new FileReader(file);
             BufferedReader reader = new BufferedReader(fileReader);
 
             long end = file.length();
-            System.out.println("end is " + end);
 
             int READ_LENGTH = 100 * 1024;
 
@@ -408,7 +408,6 @@ public class XmlUtil {
             int attrStartIndex = 0;
             int attrEndIndex = 0;
             int readSize = 0;
-            System.out.println("start at " + System.currentTimeMillis());
             Object membet = null;
             Field[] fieldlist = null;
 
@@ -613,7 +612,7 @@ public class XmlUtil {
 
                                 if (anylizeMemberIndex == fieldlist.length) {
                                     findDataNum++;
-                                    list.add(membet);
+                                    list.add(new DataCell(membet));
                                     anylizeMemberIndex = 0;
                                     membet = constructor.newInstance();
                                     fieldlist = membet.getClass()
@@ -648,15 +647,10 @@ public class XmlUtil {
     // wangsl
 
     // we can user SAX to prase xml
-    public ArrayList<Object> LoadXml_Sax(String className) {
-
-        ArrayList<Object> list = mDataListMap.get(className);
-        if (list != null) {
-            return list;
-        }
+    private DataCellList LoadDataXml_Sax(String className,String filename) {
 
         PraseXmlUtil prase = new PraseXmlUtil();
-        File file = new File(root + className + XML_FILE_TAG);
+        File file = new File(filename);
 
         if (file.exists()) {
             InputStream stream = null;
@@ -674,15 +668,37 @@ public class XmlUtil {
         return null;
     }
 
-    private int WriteXmlForNew(String tableName, ArrayList<Object> data,
-            ArrayList<ObjectMemberStruct> column) throws IOException {
+    
+    
+    private int WriteXmlForNew(String className, DataCellList datalist,
+        ArrayList<ObjectMemberStruct> column,int blockNum) throws IOException {
+    	
+    	
+    	String fileName =  ConfigNozzle.getLocalDataEngineRoot() 
+                            + className 
+                            + "_" 
+                            + blockNum 
+                            + ".xml";
+    		
+    	int startIndex = ConfigNozzle.getDataMaxFileRecord()*blockNum;
+    	return	WriteXml(className,
+    				fileName,
+    				datalist,
+    				column,
+    				startIndex,
+    				startIndex + ConfigNozzle.getDataMaxFileRecord() - 1);
+    }
+    
+    
+    private int WriteXml(String className,String fileName, DataCellList datalist,
+            ArrayList<ObjectMemberStruct> column,int start,int end) throws IOException {
 
         long current = System.currentTimeMillis();
         LogUtil.d(TAG, "WriteXmlForNew start at " + current);
 
         BufferedOutputStream out = null;
 
-        out = new BufferedOutputStream(new FileOutputStream(tableName + ".xml"));
+        out = new BufferedOutputStream(new FileOutputStream(fileName));
 
         // add TAG
         byte[] XML_TAG_BYTE = XML_TAG.getBytes();
@@ -690,7 +706,7 @@ public class XmlUtil {
         out.write(XML_TAG_BYTE);
 
         // add Start root
-        String title = "<" + tableName + ">";
+        String title = "<" + className + ">";
         byte[] TITLE_TAG_BYTE = title.getBytes();
 
         out.write(TITLE_TAG_BYTE);
@@ -700,16 +716,37 @@ public class XmlUtil {
         int countCursor = 0;
 
         LogUtil.d(TAG, "WriteXmlForNew start");
+        
+        //int startIndex = ConfigNozzle.getDataMaxFileRecord()*blockNum;
+        
+        int dataListSize = datalist.size();
+        
+        DataCellList removeList = new DataCellList();
 
-        for (Object obj : data) {
+        datalist.enterLooper();
+        for(int i = start;i<= end;i++) {
+            
+            if(i >= dataListSize) {
+                break;
+            }
+            DataCell dataCell = datalist.get(i);
+            
+            if(dataCell.getState() == DataCell.DATA_DELETE) {
+            	removeList.add(dataCell);
+            	continue;
+            }
+            
             countCursor = 0;
             StringBuffer dataString = new StringBuffer("<data>");
-
+            dataString.append("<_id attr= " + '"' + "scaler" + '"' + ">");
+            dataString.append(dataCell.getId());
+            dataString.append("</_id>");
+            
             for (ObjectMemberStruct col : column) {
                 String value = null;
                 String attr = null;
                 try {
-                    Field field = obj.getClass().getDeclaredField(col.name);
+                    Field field = dataCell.obj.getClass().getDeclaredField(col.name);
                     field.setAccessible(true);
                     attr = col.type;
 
@@ -720,23 +757,23 @@ public class XmlUtil {
 
                     switch (datatype[countCursor]) {
                     case PraseParamUtil.PRASE_TYPE_INT:
-                        value = String.valueOf(field.getInt(obj));
+                        value = String.valueOf(field.getInt(dataCell.obj));
                         break;
 
                     case PraseParamUtil.PRASE_TYPE_BOOLEAN:
-                        value = String.valueOf(field.getBoolean(obj));
+                        value = String.valueOf(field.getBoolean(dataCell.obj));
                         break;
 
                     case PraseParamUtil.PRASE_TYPE_FLOAT:
-                        value = String.valueOf(field.getFloat(obj));
+                        value = String.valueOf(field.getFloat(dataCell.obj));
                         break;
 
                     case PraseParamUtil.PRASE_TYPE_LONG:
-                        value = String.valueOf(field.getLong(obj));
+                        value = String.valueOf(field.getLong(dataCell.obj));
                         break;
 
                     case PraseParamUtil.PRASE_TYPE_STRING:
-                        value = (String) field.get(obj);
+                        value = (String) field.get(dataCell.obj);
                         break;
                     }
                 } catch (SecurityException e) {
@@ -746,14 +783,7 @@ public class XmlUtil {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                // dataString = dataString + "<" + col.name + " attr=" + '"' +
-                // col.type + '"' + ">"
-                // + String.valueOf(value) + "</" + col.name + ">";
-
-                // dataString.append("<" + col.name + " attr=" + '"' + col.type
-                // + '"' + ">"
-                // + String.valueOf(value) + "</" + col.name + ">");
-
+                
                 dataString.append("<");
                 dataString.append(col.name);
                 dataString.append(" attr=");
@@ -765,20 +795,33 @@ public class XmlUtil {
                 dataString.append(String.valueOf("</"));
                 dataString.append(String.valueOf(col.name));
                 dataString.append(String.valueOf(">"));
-
+                
+                //we should remove the data finaly
+                switch(dataCell.getState()) {
+                    //case DataCell.DATA_DELETE:
+                    	//datalist.remove(dataCell);
+                    	//removeList.add(dataCell);
+                    	//break;
+                    	
+                    case DataCell.DATA_INSERT:
+                    case DataCell.DATA_UPDATE:
+                    	dataCell.setState(DataCell.DATA_IDLE);
+                }
+                
                 countCursor++;
             }
 
             isFirstData = false;
-            // dataString += "</data>";
             dataString.append("</data>");
 
             byte[] dataBytes = dataString.toString().getBytes();
             out.write(dataBytes);
             out.flush();
+            
         }
-
-        String finishTag = "</" + tableName + ">";
+        datalist.leaveLooper();
+        
+        String finishTag = "</" + className + ">";
         byte[] FINISH_TAG_BYTE = finishTag.getBytes();
 
         out.write(FINISH_TAG_BYTE);
@@ -789,6 +832,164 @@ public class XmlUtil {
         LogUtil.d(TAG, "WriteXmlForNew end at "
                 + (System.currentTimeMillis() - current));
 
+        if(removeList.size() != 0) {
+        	datalist.remove(removeList);
+        }
+        
         return RESULT_WRITE_SUCCESS;
+    }
+    
+
+    //we first refresh the xml all~~
+    //
+    private int WriteXmlForUpdate(String className, DataCellList datalist,
+            ArrayList<ObjectMemberStruct> column,DataCell startData,DataCell endData,int blockNum) throws IOException {
+    	
+    	String fileName =  ConfigNozzle.getLocalDataEngineRoot() 
+                           + className 
+                           + "_" 
+                           + blockNum 
+                           + ".xml";
+    	
+    	WriteXml(className,
+				fileName,
+				datalist,
+				column,
+				datalist.indexOf(startData),
+				datalist.indexOf(endData));
+
+    	return RESULT_WRITE_SUCCESS;
+    }
+    
+    //
+    public int CreateDataTableXml(String filename,
+            HashMap<String,DataTableControl> datatableControl) 
+               throws IOException {
+        
+        BufferedOutputStream out = null;
+
+        out = new BufferedOutputStream(new FileOutputStream(filename));
+
+        byte[] XML_TAG_BYTE = XML_TAG.getBytes();
+
+        out.write(XML_TAG_BYTE);
+
+        String title = "<" + TABLE_ELEMENT_TAG_RECORD + ">";
+        byte[] TITLE_TAG_BYTE = title.getBytes();
+
+        out.write(TITLE_TAG_BYTE);
+        
+        Iterator iter = datatableControl.entrySet().iterator();
+        
+        while (iter.hasNext()) {
+            Map.Entry entry = (Map.Entry) iter.next();
+            String tab = String.valueOf(entry.getKey());
+            DataTableControl val = (DataTableControl)entry.getValue();
+
+            StringBuffer dataString = new StringBuffer("<" + TABLE_ELEMENT_TAG_DATA + ">");
+            dataString.append("<" + TABLE_ELEMENT_TAG_TAB + ">");
+            dataString.append(tab);
+            dataString.append("</" + TABLE_ELEMENT_TAG_TAB + ">");
+            
+            dataString.append("<" + TABLE_ELEMENT_TAG_START + ">");
+            dataString.append(val.start);
+            dataString.append("</" + TABLE_ELEMENT_TAG_START + ">");
+            
+            dataString.append("<" + TABLE_ELEMENT_TAG_END + ">");
+            dataString.append(val.end);
+            dataString.append("</" + TABLE_ELEMENT_TAG_END + ">");
+            
+            dataString.append("</" + TABLE_ELEMENT_TAG_DATA + ">");
+
+            byte[] dataBytes = dataString.toString().getBytes();
+            out.write(dataBytes);
+            out.flush();
+        }
+
+        String finishTag = "</" + TABLE_ELEMENT_TAG_RECORD + ">";
+        byte[] FINISH_TAG_BYTE = finishTag.getBytes();
+
+        out.write(FINISH_TAG_BYTE);
+
+        out.flush();
+        out.close();
+
+        return RESULT_WRITE_SUCCESS;
+    }
+    
+    public void LoadDataTableXml(String filename,HashMap<String,DataTableControl> tableMap) {
+        
+        try {
+            Document doc = mBuilder.parse(filename);
+
+            Element root = doc.getDocumentElement();
+
+            NodeList elementList = root.getChildNodes();
+
+            /**
+             * the data class can not create constructor
+             * 
+             * */
+
+            for (int j = 0; j < elementList.getLength(); j++) {
+                
+                DataTableControl data = new DataTableControl(0,0);
+
+                Element node = (Element) elementList.item(j);
+
+                if (!node.getNodeName().equals(TABLE_ELEMENT_TAG_DATA)) {
+                    continue;
+                }
+
+                NodeList dataNodeList = node.getChildNodes();
+
+                String fileName = "";
+                
+                for (int k = 0; k < dataNodeList.getLength(); k++) {
+                    Element dataNode = (Element) dataNodeList.item(k);
+                    String txt = dataNode.getTextContent();
+                        
+                    if(dataNode.getNodeName().equals(TABLE_ELEMENT_TAG_TAB)) {
+                        fileName = txt;
+                    } else if(dataNode.getNodeName().equals(TABLE_ELEMENT_TAG_START)) {
+                        data.start = Integer.valueOf(txt);
+                    } else if(dataNode.getNodeName().equals(TABLE_ELEMENT_TAG_END)) {
+                        data.end = Integer.valueOf(txt);
+                    }
+                }
+                tableMap.put(fileName+".xml", data);
+            }
+        } catch (SAXException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }       
+    }
+    
+    public String transformFileName(String classname,int blocknum) {
+    	String fileName = classname + "_" + blocknum + ".xml";
+    	return fileName;
+    }
+    
+    public int transformBlockNum(String filename) {
+    	int blockNum = Integer.valueOf(
+    			filename.substring(filename.lastIndexOf("_") + 1, 
+						filename.lastIndexOf(".xml")));
+    	
+    	return blockNum;
+    }
+    
+    public String transformClassName(String filename) {
+    	return filename.substring(0,filename.lastIndexOf("_"));
+    }
+    
+    public String transformFullPath(String classname,int blockNum) {
+    	return  ConfigNozzle.getLocalDataEngineRoot() 
+                    + classname
+                    + "_" 
+                    + blockNum 
+                    + ".xml";
     }
 }

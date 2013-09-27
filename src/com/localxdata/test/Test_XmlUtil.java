@@ -1,13 +1,24 @@
 package com.localxdata.test;
 
+import com.localxdata.storage.DataCellList;
+import com.localxdata.struct.DataCell;
 import com.localxdata.util.XmlUtil;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class Test_XmlUtil implements TestInf {
+
+    @Override
+    public void startTest() {
+        // TODO Auto-generated method stub
+        
+    }
+    
+    /*
     private boolean testCreateByFileName(String filename) {
         XmlUtil x = XmlUtil.getInstance();
-        if (x.CreateXml(filename) != XmlUtil.RESULT_CREATE_SUCCESS) {
+        if (x.CreateDataXml(filename) != XmlUtil.RESULT_CREATE_SUCCESS) {
             return false;
         }
 
@@ -63,7 +74,7 @@ public class Test_XmlUtil implements TestInf {
 
         System.out.println("testLoadXml_sax start at "
                 + System.currentTimeMillis());
-        ArrayList list = x.LoadXml_Sax(Test_Class_SmallData_String.class
+        ArrayList<DataCell> list = x.LoadDataXml_Sax(Test_Class_SmallData_String.class
                 .getName());
         System.out.println("testLoadXml_sax end at "
                 + System.currentTimeMillis());
@@ -77,7 +88,9 @@ public class Test_XmlUtil implements TestInf {
 
         System.out.println("testLoadXml_All start at "
                 + System.currentTimeMillis());
-        x.LoadAllXml();
+        
+        HashMap<String, DataCellList> dataListMap = new HashMap<String, DataCellList>();
+        x.LoadAllDataXml(dataListMap);
         System.out.println("testLoadXml_All end at "
                 + System.currentTimeMillis());
 
@@ -89,4 +102,5 @@ public class Test_XmlUtil implements TestInf {
 
         testLoadXml_All();
     }
+    */
 }

@@ -1,6 +1,8 @@
 package com.localxdata.test;
 
 import com.localxdata.sql.ExcuteSqlBySingleTable;
+import com.localxdata.storage.DataCellList;
+
 import java.io.PrintStream;
 import java.util.ArrayList;
 
@@ -16,12 +18,8 @@ public class Test_ExcuteSql_Int implements TestInf {
             Test_Class_SmallData_Int testData = new Test_Class_SmallData_Int();
             testData.init(i);
             list.add(testData);
-            if (i % 10000 == 1) {
-                System.gc();
-            }
         }
-        this.sqlExcute.creatTable(Test_Class_SmallData_String.class.getName(),
-                list);
+        this.sqlExcute.insert(list);
         System.out.println(getClass() + ":Test_create end at "
                 + System.currentTimeMillis());
     }
@@ -34,7 +32,27 @@ public class Test_ExcuteSql_Int implements TestInf {
         System.out.println(getClass() + ":Test_Query_Data_Equal end at "
                 + System.currentTimeMillis());
 
+        for(Object data:list) {
+            System.out.println("Test_Query_Data_Equal is " + data);
+            Test_Class_SmallData_Int testData = (Test_Class_SmallData_Int)data;
+            System.out.println("testData " + testData.data1);
+        }
         return list.size();
+    }
+    
+    public void Test_Query_Data_Update() {
+    	Test_Class_SmallData_Int data = new Test_Class_SmallData_Int();
+    	data.data1 = -1;
+    	
+    	String arg[] ={"data1"};
+    	this.sqlExcute.update(data,arg,"data3 == 100");
+    }
+    
+    public void Test_Query_Data_Delete() {
+    	Test_Class_SmallData_Int data = new Test_Class_SmallData_Int();
+    	
+    	this.sqlExcute.delete(Test_Class_SmallData_Int.class.getName(), 
+    			              "data3 == 1");
     }
 
     public int Test_Data_LessThan(String str) {
@@ -46,9 +64,13 @@ public class Test_ExcuteSql_Int implements TestInf {
     }
 
     public void startTest() {
-        Test_create_Data(500);
-
-        int result = Test_Query_Data_Equal("data1 < 100 && data2 < 100");
+        Test_create_Data(5000);
+        //Test_Query_Data_Update();
+        
+        //Test_Query_Data_Delete();
+        
+        int result = Test_Query_Data_Equal("data1 == 100");
+        System.out.println("result is " + result);
         if (result == 1)
             System.out.println(getClass() + "Test_Query_Data_Equal trace1 OK");
         else

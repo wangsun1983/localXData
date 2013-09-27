@@ -4,6 +4,8 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import com.localxdata.struct.DataCell;
+
 public class IndexUtil {
     private static IndexUtil mInstance;
     private HashMap<String, IndexTree> mIndexMap;
@@ -25,7 +27,7 @@ public class IndexUtil {
         IndexTree index = (IndexTree) this.mIndexMap.get(indexStr);
 
         if (index == null) {
-            index = new IndexTree(member);
+            index = new IndexTree();
             this.mIndexMap.put(indexStr, index);
         }
 
@@ -37,21 +39,21 @@ public class IndexUtil {
         this.mIndexMap.put(indexStr, index);
     }
 
-    public void updateIndex(Object obj) {
-        insertIndex(obj);
+    public void updateIndex(DataCell datacell) {
+        insertIndex(datacell);
     }
 
-    public void insertIndex(Object obj) {
-        Field[] fields = obj.getClass().getFields();
-        String table = obj.getClass().getName();
+    public void insertIndex(DataCell datacell) {
+        Field[] fields = datacell.obj.getClass().getFields();
+        String table = datacell.obj.getClass().getName();
 
         for(Field field:fields) {
             String fieldName = field.getName();
             IndexTree tree = getIndexTree(table, fieldName);
             
             try {
-                Comparable ele = (Comparable)field.get(obj);
-                tree.add(obj,ele);
+                Comparable ele = (Comparable)field.get(datacell.obj);
+                tree.add(datacell,ele);
             } catch (IllegalArgumentException e) {
                 e.printStackTrace();
             } catch (IllegalAccessException e) {
@@ -60,8 +62,8 @@ public class IndexUtil {
         }
     }
 
-    public Node searchNode(IndexTree tree, Object obj, Comparable data) {
-        return tree.getNode(obj, data);
+    public Node searchNode(IndexTree tree, DataCell datacell, Comparable data) {
+        return tree.getNode(datacell, data);
     }
 
     public Node searchNode(IndexTree tree, int action, Comparable data) {
@@ -69,7 +71,7 @@ public class IndexUtil {
     }
 
     public void changeIndexToList(ArrayList<Object> list, Node index) {
-        list.add(index.obj);
+        list.add(index.dataCell.obj);
         if (index.left != null) {
             changeIndexToList(list, index.left);
         }

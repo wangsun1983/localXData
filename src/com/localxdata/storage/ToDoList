@@ -1,0 +1,19 @@
+We should use btree to make db smaller.
+Because if we save 50K records in a file,
+the io opreation will cost large memory and 
+a lot of time.Also if we only need to change
+one records in the 50K records,we need not
+to write all the records to file again.we can
+write to the file which the data was saved in.
+
+Defination
+1.The db table's name is table2db.xml ->FINISH
+
+2.All the db's name should save like xxxx_1.xml ->FINISH
+
+3.When we refresh db,we should not write all the xml files again.
+  We can only write the xml whose data was modified. ->TODO
+  
+4.SaveHandler.findDataCellByBlocknum ->Finish
+
+5.We should rewrite the file whose data was changed ->TODO

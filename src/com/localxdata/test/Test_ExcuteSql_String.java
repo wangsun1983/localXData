@@ -33,8 +33,7 @@ public class Test_ExcuteSql_String implements TestInf {
             list.add(testData);
         }
 
-        this.sqlExcute.creatTable(Test_Class_SmallData_String.class.getName(),
-                list);
+        this.sqlExcute.insert(list);
         System.out.println(getClass() + ":Test_create end at "
                 + System.currentTimeMillis());
     }

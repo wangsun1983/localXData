@@ -289,7 +289,7 @@ public class PraseSqlUtil {
             if(isFloat) {
                 return PREDICT_IT_IS_FLOAT_DATA;
             } else {
-            	//we cannot differentiate between long and int,
+                //we cannot differentiate between long and int,
                 //so we return long.
                 return PREDICT_IT_IS_LONG_DATA;
             }
@@ -542,7 +542,7 @@ public class PraseSqlUtil {
     //fast search action start
     public ActionTreeNode changeActionListToTree(ArrayList<Action> actionList) {
         
-        ArrayList<Action> list = new ArrayList(actionList);
+        ArrayList<Action> list = new ArrayList<Action>(actionList);
         
         ActionTreeNode rootNode = new ActionTreeNode();
         

@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import com.localxdata.storage.DataCellList;
+import com.localxdata.storage.StorageNozzle;
+import com.localxdata.struct.DataCell;
 import com.localxdata.util.LogUtil;
 import com.localxdata.util.PraseSqlUtil;
 import com.localxdata.util.XmlUtil;
@@ -15,7 +18,7 @@ public class ExcuteSqlByMultiTable {
     
     protected PraseSqlUtil mPraseSqlInstance;
     protected XmlUtil mXmlUtil;
-    protected static HashMap<String,ArrayList<Object>>mTableHashMap;
+    protected static HashMap<String,DataCellList>mTableHashMap;
     
     protected static ExcuteSqlByMultiTable mInstance = null;
     
@@ -24,7 +27,8 @@ public class ExcuteSqlByMultiTable {
     private ExcuteSqlByMultiTable() {
         mPraseSqlInstance = PraseSqlUtil.getInstance();
         mXmlUtil = XmlUtil.getInstance();
-        mTableHashMap = mXmlUtil.LoadAllXml();
+        //mTableHashMap = mXmlUtil.LoadAllXml();
+        mTableHashMap = StorageNozzle.getAllDataList();
     }
     
     public static ExcuteSqlByMultiTable getInstance() {
@@ -58,7 +62,7 @@ public class ExcuteSqlByMultiTable {
     	ActionTreeNode joinNode = mPraseSqlInstance.changeActionListToTree(joinAction);
     	
     	ArrayList<ArrayList<Object>> resultList = new ArrayList<ArrayList<Object>>();
-        ArrayList<ArrayList<Object>>dataList = new ArrayList<ArrayList<Object>>();
+        ArrayList<ArrayList<DataCell>>dataList = new ArrayList<ArrayList<DataCell>>();
         ActionTreeNode actionNode = null;
         
         if(sql != null) {
@@ -69,7 +73,7 @@ public class ExcuteSqlByMultiTable {
         HashMap <String,Integer>cursorMap = new HashMap<String,Integer>();
         
         for(String table:tableName) {
-        	ArrayList<Object> data = mXmlUtil.LoadXml_Sax(table);
+        	ArrayList<DataCell> data = StorageNozzle.getDataList(table);
             cursorMap.put(table, data.size() - 1);
             dataList.add(data);
         }
@@ -88,13 +92,13 @@ public class ExcuteSqlByMultiTable {
         	
         	HashMap<String,Object>checkdata = new HashMap<String,Object>();
 
-        	for(ArrayList<Object> objlist:dataList) {
-        		Object obj = objlist.get(0);
+        	for(ArrayList<DataCell> datacelllist:dataList) {
+        		Object obj = datacelllist.get(0).obj;
         		cursor = cursorMap.get(obj.getClass().getName());
         		
         		
         		if(cursor >= 0) {        			
-        		    checkdata.put(obj.getClass().getName(), objlist.get(cursor));
+        		    checkdata.put(obj.getClass().getName(), datacelllist.get(cursor).obj);
         		    if(count == 0) {
         		        cursor--;
         		        cursorMap.put(obj.getClass().getName(),cursor);
@@ -117,8 +121,8 @@ public class ExcuteSqlByMultiTable {
             		    	    isNeedContinue = true;
             		    	}
             		    } else {
-            		    	cursor = objlist.size() - 1;
-            		    	checkdata.put(obj.getClass().getName(), objlist.get(cursor));
+            		    	cursor = datacelllist.size() - 1;
+            		    	checkdata.put(obj.getClass().getName(), datacelllist.get(cursor).obj);
                 			cursorMap.put(obj.getClass().getName(),cursor);
                 			
             		    }

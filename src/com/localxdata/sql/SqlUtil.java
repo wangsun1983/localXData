@@ -3,20 +3,13 @@ package com.localxdata.sql;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Queue;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.localxdata.index.IndexTree;
-import com.localxdata.index.IndexUtil;
-import com.localxdata.index.Node;
-import com.localxdata.util.LogUtil;
 import com.localxdata.util.PraseParamUtil;
-import com.localxdata.util.PraseSqlUtil;
 import com.localxdata.util.PraseSqlUtil.Action;
 import com.localxdata.util.PraseSqlUtil.ActionTreeNode;
 import com.localxdata.util.PraseSqlUtil.CombineAction;
@@ -403,63 +396,11 @@ public class SqlUtil {
     }
     
     //wangsl
-    public static HashSet<Object> checkDataByTree(String className,ActionTreeNode treeNode){
-    	HashSet<Object> leftChildResult = new HashSet<Object>();
-    	HashSet<Object> rightChildResult = new HashSet<Object>();
-
-        if(treeNode.leftChild != null && treeNode.rightChild != null) {
-        	leftChildResult = checkDataByTree(className,treeNode.leftChild);
-        	
-        	if(leftChildResult == null || leftChildResult.size() == 0) {
-        		return null;
-        	}
-        	
-        	rightChildResult = checkDataByTree(className,treeNode.rightChild);
-        	
-        	switch(treeNode.action.mAction) {
-                case Action.SQL_ACTION_AND:
-                     leftChildResult.retainAll(rightChildResult);
-                     return leftChildResult;
-                     
-                case Action.SQL_ACTION_OR:
-                    leftChildResult.addAll(rightChildResult);
-                    return leftChildResult;
-            }
-        }
+    public static void checkDataByTree_Index(Object obj,ActionTreeNode treeNode,HashSet result) {
         
-        return compareByIndex(className,treeNode);
+        //if(treeNode.leftChild != null)
+        
     }
-   
-    private static HashSet<Object> compareByIndex(String className,ActionTreeNode treeNode) {
-    	
-    	HashSet<Object> result = new HashSet<Object>();
-    	
-    	if(treeNode.action instanceof ComputeAction) {
-    	    ComputeAction act = (ComputeAction)treeNode.action;	
-    		
-    	    String mFieldName = act.mFieldName;
-    	    
-    		IndexTree tree  = IndexUtil.getInstance().getIndexTree(className, mFieldName);
-    		
-    		Node resultNode = null;
-    		
-    		if(tree != null) {
-    			
-    			if(act.mDataType == Action.DATA_TYPE_LONG) {
-    				act.mDataType = PraseParamUtil.PraseObjectType(tree.getDataType());
-    			}
-    			
-    			result = tree.searchNode(treeNode.action.mAction,
-    					revertDataByType(act.mDataType,act.mData));
-    			
-    			return result;
-    		}
-    	}
-    	
-    	return null;
-    }
-    
-    
     //wangsl
     
     
@@ -799,25 +740,4 @@ public class SqlUtil {
     	return null;
     }
     //Interface for multiTable End
-    
-    private static Comparable revertDataByType(int type,String data){
-    	switch(type) {
-    	    case Action.DATA_TYPE_STRING:
-    	    	return data;
-    	    	
-    	    case Action.DATA_TYPE_BOOLEAN:
-    	    	return Boolean.parseBoolean(data);
-    	    	
-    	    case Action.DATA_TYPE_FLOAT:
-    	    	return Float.parseFloat(data);
-    	    	
-    	    case Action.DATA_TYPE_LONG:
-    	    	return Long.parseLong(data);
-    	    	
-    	    case Action.DATA_TYPE_TYPE_INT:
-    	    	return Integer.parseInt(data);
-    	}
-    	
-    	return null;
-    }
 }

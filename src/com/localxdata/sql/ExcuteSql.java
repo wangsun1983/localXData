@@ -1,16 +1,13 @@
 package com.localxdata.sql;
 
-import com.localxdata.util.XmlUtil;
 import java.util.ArrayList;
 
 public class ExcuteSql {
-    private XmlUtil mXmlUtil;
     private ExcuteSqlByMultiTable mExcuteSqlByMultiTable;
     private ExcuteSqlBySingleTable mExcuteSqlBySingle;
     private static ExcuteSql instance;
 
     private ExcuteSql() {
-        this.mXmlUtil = XmlUtil.getInstance();
         this.mExcuteSqlByMultiTable = ExcuteSqlByMultiTable.getInstance();
         this.mExcuteSqlBySingle = ExcuteSqlBySingleTable.getInstance();
     }
@@ -21,10 +18,6 @@ public class ExcuteSql {
         }
 
         return instance;
-    }
-
-    public void setDbPath(String filePath) {
-        this.mXmlUtil.setXmlRootDir(filePath);
     }
 
     public ArrayList<ArrayList<Object>> query(String[] tableName,

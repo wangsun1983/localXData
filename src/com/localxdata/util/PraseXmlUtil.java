@@ -4,7 +4,6 @@ import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.HashMap;
 
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -14,16 +13,19 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import com.localxdata.index.IndexUtil;
-
-import sun.rmi.runtime.Log;
+import com.localxdata.storage.DataCellList;
+import com.localxdata.struct.DataCell;
 
 public class PraseXmlUtil {
 
     public static final String TAG = "PraseXmlUtil";
+    
+    private static int ID_GENERATOR_TYPE = -1;
+    
     private int mFieldLength = 0;
     private int mFieldIndex = 0;
     private String className = null;
-    private ArrayList<Object> mResultList = new ArrayList<Object>();
+    private DataCellList mResultList = new DataCellList();
     private String mNodeName;
     private String mNodeValue;
     //private HashMap<String,Integer>mTypeHashMap = new HashMap<String,Integer>();
@@ -37,7 +39,8 @@ public class PraseXmlUtil {
     //
     private String mTableName;
     
-
+    int count = 0;
+    
     class SaxParseXml extends DefaultHandler {
 
         @Override
@@ -59,7 +62,11 @@ public class PraseXmlUtil {
             
             mNodeName = qName;
             //mTypeHashMap.put(mNodeName,PraseParamUtil.PraseObjectType(attributes.getValue(0)));
-            mTypeHashMap.add(PraseParamUtil.PraseObjectType(attributes.getValue(0)));
+            if(attributes.getValue(0).equals("scaler")) {
+                mTypeHashMap.add(ID_GENERATOR_TYPE);
+            }else {
+                mTypeHashMap.add(PraseParamUtil.PraseObjectType(attributes.getValue(0)));
+            }
         }
 
         @Override
@@ -79,8 +86,15 @@ public class PraseXmlUtil {
             if(mNodeName!=null){
                 try {
                     String dataNode=new String(ch,start,length);
-                    Field field = mFieldList[memberIndex];
-                    switch(mTypeHashMap.get(memberIndex)) {
+                    
+                    int type = mTypeHashMap.get(memberIndex);
+                    if(type == ID_GENERATOR_TYPE) {
+                        memberIndex++;
+                        return;
+                    }
+                    
+                    Field field = mFieldList[memberIndex -1];
+                    switch(type) {
                         case PraseParamUtil.PRASE_TYPE_INT:
                             int intValue = Integer.valueOf(dataNode);
                             field.setInt(mMember, intValue);
@@ -108,14 +122,14 @@ public class PraseXmlUtil {
                     }
                 
                     memberIndex++;
-                    if(memberIndex == mFieldList.length) {
-                        mResultList.add(mMember);
-                        //wangsl use index to fasten search
+                    //because the _id is not the class member,
+                    //so we should eliminate _id.
+                    if(memberIndex - 1 == mFieldList.length) {
+                        count++;
                         
-                        //LogUtil.d(TAG, "add index start at " + System.currentTimeMillis());
-                        IndexUtil.getInstance().insertIndex(mMember);
-                        //LogUtil.d(TAG, "add index end at " + System.currentTimeMillis());
-                        
+                        DataCell datacell = new DataCell(mMember);
+                        mResultList.add(datacell);
+                        IndexUtil.getInstance().insertIndex(datacell);
                         //wangsl use index to fasten search
                         isFristData = false;
                         memberIndex = 0;
@@ -129,7 +143,7 @@ public class PraseXmlUtil {
         }
     }
 
-    public ArrayList<Object> Prase(String className,InputStream stream) {
+    public DataCellList Prase(String className,InputStream stream) {
         SAXParser parser = null;
         try {
             parser = SAXParserFactory.newInstance().newSAXParser();
@@ -161,7 +175,7 @@ public class PraseXmlUtil {
             parser.parse(stream, parseXml);
             
         } catch (Exception e) {
-            System.out.println(e);
+        	//TODO
         }
         
         return mResultList;

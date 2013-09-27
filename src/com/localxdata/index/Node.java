@@ -1,9 +1,11 @@
 package com.localxdata.index;
 
+import com.localxdata.struct.DataCell;
+
 public class Node<T extends Comparable> {
     public static final boolean RED = false;
     public static final boolean BLACK = true;
-    Object obj;
+    DataCell dataCell;
     T data;
     Node parent;
     Node left;
@@ -11,8 +13,8 @@ public class Node<T extends Comparable> {
     Node equal;
     boolean color = true;
 
-    public Node(Object obj, T data, Node parent, Node left, Node right) {
-        this.obj = obj;
+    public Node(DataCell dataCell, T data, Node parent, Node left, Node right) {
+        this.dataCell = dataCell;
         this.data = data;
         this.parent = parent;
         this.left = left;

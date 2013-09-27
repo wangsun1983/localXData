@@ -2,6 +2,7 @@ package com.localxdata.index;
 
 import java.util.*;
 
+import com.localxdata.struct.DataCell;
 import com.localxdata.util.PraseSqlUtil.Action;
 
 public class IndexTree<T extends Comparable> {
@@ -10,33 +11,17 @@ public class IndexTree<T extends Comparable> {
     private static final boolean BLACK = Node.BLACK;
 
     private Node root;
-    private String mDataType;
-    private String mFieldName;
 
     // 两个构造器用于创建排序二叉树
-    public IndexTree(String fieldName) {
+    public IndexTree() {
         root = null;
-        mFieldName = fieldName;
-    }
-    
-    public String getDataType() {
-    	return mDataType;
     }
 
     // 添加节点
-    public void add(Object obj, T ele) {
+    public void add(DataCell dataCell, T ele) {
         // 如果根节点为null
         if (root == null) {
-            root = new Node(obj, ele, null, null, null);
-            try {
-				mDataType = obj.getClass().getField(mFieldName).getType().getName();
-			} catch (SecurityException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (NoSuchFieldException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+            root = new Node(dataCell, ele, null, null, null);
         } else {
             Node current = root;
             Node parent = null;
@@ -57,7 +42,7 @@ public class IndexTree<T extends Comparable> {
                 }
             } while (current != null);
             // 创建新节点
-            Node newNode = new Node(obj, ele, parent, null, null);
+            Node newNode = new Node(dataCell, ele, parent, null, null);
             // 如果新节点的值大于父节点的值
             if (cmp > 0) {
                 // 新节点作为父节点的右子节点
@@ -165,7 +150,7 @@ public class IndexTree<T extends Comparable> {
         return null;
     }
 
-    public Node getNode(Object obj, T ele) {
+    public Node getNode(DataCell datacell, T ele) {
         Node p = this.root;
         while (p != null) {
             int cmp = ele.compareTo(p.data);
@@ -176,7 +161,7 @@ public class IndexTree<T extends Comparable> {
                 p = p.right;
             } else {
                 while (p != null) {
-                    if (p.obj == obj) {
+                    if (p.dataCell.obj == datacell.obj) {
                         return p;
                     }
                     p = p.equal;
@@ -187,21 +172,8 @@ public class IndexTree<T extends Comparable> {
         return null;
     }
 
-    public HashSet<Object>searchNode(int action,T ele) {
-    	
-    	Node resultNode = getNode(action,ele);
-    	
-    	HashSet<Object> result = new HashSet<Object>();
-    	
-    	adjustAfterGetNode(resultNode,result,action,ele);
-    	
-    	return result;
-    	
-    }
-    
     public Node getNode(int action, T ele) {
         Node p = this.root;
-
         while (p != null) {
             int cmp = ele.compareTo(p.data);
             switch (action) {
@@ -212,29 +184,33 @@ public class IndexTree<T extends Comparable> {
 
                 break;
             case Action.SQL_ACTION_LESS_THAN:
-                if (cmp > 0 || cmp == 0) {
+                if (cmp > 0) {
                     return p;
                 }
 
-                if (cmp < 0) {
-                    p = p.left;
+                if (cmp == 0) {
+                    return p.left;
                 }
 
                 break;
             case Action.SQL_ACTION_MORE_THAN:
-                if (cmp < 0 || cmp == 0) {
+                if (cmp < 0) {
                     return p;
                 }
 
-                if (cmp > 0) {
-                    p = p.right;
+                if (cmp == 0) {
+                    return p.right;
                 }
                 break;
 
-            }            
+            }
+            if (cmp < 0) {
+                p = p.left;
+            } else if (cmp > 0) {
+                p = p.right;
+            }
         }
 
-        
         return null;
     }
 
@@ -261,106 +237,6 @@ public class IndexTree<T extends Comparable> {
         }
         return list;
     }
-    
-    //wangsl
-    //for example:parent data is 108,and the left child is 96,so if 
-    //i want to get all the data less than 100,the proper node is 96.
-    //so the nod(96)'s right child (103) may also be selected,
-    private void adjustAfterGetNode(Node node,HashSet<Object> result,int action, T ele) {
-    	Queue<Node> queue = new ArrayDeque<Node>(); 
-        queue.offer(node);
-        
-        Queue<Node> suspectQueue = new ArrayDeque<Node>();
-        
-        int count = 0;
-        while (!queue.isEmpty() || !suspectQueue.isEmpty()) {
-        	//we check suspectQueue first
-        	Node p = null;
-        	
-        	if(!suspectQueue.isEmpty()) {
-        		System.out.println("wangsl,emptffffffffff");
-        		Node node1 = suspectQueue.peek();
-        		int cmp = ele.compareTo(node1.data);
-        		System.out.println("suscpect data is " + node1.data);
-        		switch(action) {
-        		    case Action.SQL_ACTION_LESS_THAN:
-        		        if(cmp <= 0) {
-        		        	result.add(node1.obj);
-        		        }
-        		    	break;
-        		    	
-        		    case Action.SQL_ACTION_MORE_THAN:
-        		    	if(cmp >= 0) {
-        		    		result.add(node1.obj);
-        		    	}
-        		    	break;
-        		}
-        		
-        		p = suspectQueue.poll();
-        		
-        	} else if(!queue.isEmpty()) {
-        		Node node1 = queue.peek();
-            	//result.add(queue.peek().obj);
-            	result.add(node1.obj);
-            	System.out.println("data is " + node1.data);
-                p = queue.poll();
-        	}
-        	
-            // 如果左子节点不为null，将它入“队列”
-            if (p.left != null) {
-            	int cmp = ele.compareTo(p.left.data);
-            	
-            	//TODO
-            	switch(action) {
-                    case Action.SQL_ACTION_LESS_THAN:
-                    	if(cmp > 0) {
-                    		queue.offer(p.left);
-                    	} else {
-                    		if(p.left.right != null) {
-                    		    suspectQueue.offer(p.left.right);
-                    		}
-                    	}
-                        break;
-                    case Action.SQL_ACTION_MORE_THAN:
-                        if(cmp < 0) {
-                        	queue.offer(p.left);
-                        } else {
-                        	if(p.left.left != null) {
-                        		suspectQueue.offer(p.left.left);
-                        	}
-                        }
-                        break;
-            	}
-                //queue.offer(p.left);
-            }
-            // 如果右子节点不为null，将它入“队列”
-            if (p.right != null) {
-            	int cmp = ele.compareTo(p.right.data);
-            	switch(action) {
-                    case Action.SQL_ACTION_LESS_THAN:
-                	    if(cmp > 0) {
-                		    queue.offer(p.right);
-                	    }else {
-                    		if(p.right.right != null) {
-                    		    suspectQueue.offer(p.right.right);
-                    		}
-                    	}
-                        break;
-                    case Action.SQL_ACTION_MORE_THAN:
-                        if(cmp < 0) {
-                    	    queue.offer(p.right);
-                        } else {
-                        	if(p.right.left != null) {
-                        		suspectQueue.offer(p.right.left);
-                        	}
-                        }
-                        break;
-        	    }
-                //queue.offer(p.right);
-            }
-        }
-    }
-    //wangsl
 
     // 插入节点后修复红黑树
     private void fixAfterInsertion(Node x) {
