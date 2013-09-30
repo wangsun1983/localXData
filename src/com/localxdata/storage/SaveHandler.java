@@ -54,13 +54,11 @@ public class SaveHandler extends Thread {
     private static final int FIND_RESULT_START_CELL = 0;
     private static final int FIND_RESULT_END_CELL = 1;
 
-    private static final String DEBUG_TAG = "StoreSqlThread";
+    private static final String DEBUG_TAG = "SaveHandler";
 
     private int mInterval = INTERVAL_MIDIUM;
 
     private XmlUtil mXmlUtilInstance;
-
-    private static HashMap<String, DataCellList> mStoreMap;
 
     private ArrayList<ModifyTable> changedTable = new ArrayList<ModifyTable>();
 
@@ -85,10 +83,6 @@ public class SaveHandler extends Thread {
 
     public void init() {
         // TODO Nothing
-    }
-
-    public void setStoreDataBase(HashMap<String, DataCellList> map) {
-        mStoreMap = map;
     }
 
     public void addInsertTable(String className,int pos) {

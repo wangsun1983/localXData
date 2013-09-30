@@ -14,6 +14,8 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import com.localxdata.index.IndexUtil;
 import com.localxdata.storage.DataCellList;
+import com.localxdata.storage.MemoryData;
+import com.localxdata.storage.StorageNozzle;
 import com.localxdata.struct.DataCell;
 
 public class PraseXmlUtil {
@@ -36,13 +38,18 @@ public class PraseXmlUtil {
     private Constructor mConstructor;
     
     private Field []mFieldList;
-    //
-    private String mTableName;
     
     int count = 0;
     
+    private DataCellList dataCellList;
+    
     class SaxParseXml extends DefaultHandler {
 
+    	public SaxParseXml(String cls) {
+    		dataCellList = MemoryData.getDataList(cls);
+    		className = cls;
+    	}
+    	
         @Override
         public void startDocument() throws SAXException {
             // TODO nothing
@@ -127,10 +134,13 @@ public class PraseXmlUtil {
                     if(memberIndex - 1 == mFieldList.length) {
                         count++;
                         
-                        DataCell datacell = new DataCell(mMember);
-                        mResultList.add(datacell);
-                        IndexUtil.getInstance().insertIndex(datacell);
-                        //wangsl use index to fasten search
+                        //DataCell cell = StorageNozzle.insertData(className,mMember);
+                        DataCell cell = StorageNozzle.insertDataFromXml(className,mMember);
+                        
+                        IndexUtil.getInstance().insertIndex(cell);
+                        
+                        //mResultList.add(cell);
+                        
                         isFristData = false;
                         memberIndex = 0;
                         mMember = mConstructor.newInstance();
@@ -147,7 +157,7 @@ public class PraseXmlUtil {
         SAXParser parser = null;
         try {
             parser = SAXParserFactory.newInstance().newSAXParser();
-            SaxParseXml parseXml = new SaxParseXml();
+            SaxParseXml parseXml = new SaxParseXml(className);
                 
             Class clazz = Class.forName(className);
             Constructor[] constructorList = clazz.getDeclaredConstructors();
@@ -178,6 +188,6 @@ public class PraseXmlUtil {
         	//TODO
         }
         
-        return mResultList;
+        return StorageNozzle.getDataList(className);
     }
 }

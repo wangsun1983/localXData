@@ -36,13 +36,12 @@ public class StorageNozzle {
         //TODO
     }
     
-    public static void insertData(String className,DataCell data) {
-        MemoryData.insertData(className,data);
+    public static DataCell insertData(String className,Object obj) {
+        return MemoryData.insertData(className,obj);
     }
     
-    
-    public static void inseartData() {
-        //TODO
+    public static DataCell insertDataFromXml(String className,Object obj) {
+    	return MemoryData.insertDataFromXml(className, obj);
     }
     
     public static void deleteData(String className,DataCell data) {

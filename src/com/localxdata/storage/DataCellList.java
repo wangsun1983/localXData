@@ -2,7 +2,6 @@ package com.localxdata.storage;
 
 import java.util.ArrayList;
 
-import com.localxdata.exception.MethodException;
 import com.localxdata.struct.DataCell;
 import com.localxdata.util.LogUtil;
 
@@ -35,6 +34,9 @@ public class DataCellList extends ArrayList<DataCell>{
     private Object mWaitForLoopObj = new Object();
     private Object mWaitForRemoveAddObj = new Object();
     
+    private int size = 0;
+    private DataCell mLastCell;
+    
     public void enterLooper() {
     	
     	//DebugThread debugThread = new DebugThread();
@@ -64,18 +66,6 @@ public class DataCellList extends ArrayList<DataCell>{
     }
     
     public boolean add(DataCell data) {
-    	LogUtil.d("DataCellList", "size is " + this.size());
-    	int size = this.size();
-    	
-    	int maxid = 0;
-    	
-    	if(size != 0) {
-    	    maxid = this.get(size - 1).getId() + 1;
-    	}else {
-    		maxid = 0;
-    	}
-    	
-        data.setId(maxid);
         setRemoveAddFlag();
         boolean result = super.add(data);
         clearRemoveAddFlag();
@@ -84,34 +74,13 @@ public class DataCellList extends ArrayList<DataCell>{
     }
     
     public void addAll(DataCellList list) {
-    	int maxid =  this.get(this.size() - 1).getId();
-    	
-    	setRemoveAddFlag();
-        super.addAll(list);
-        clearRemoveAddFlag();
-        
-        //we should change id
-        int startIndex = super.indexOf(list.get(0));
-        int length = list.size();
-        
-        for(int i = 0;i < length;i++) {
-        	int size = this.size();
-        	int setId = 0;
-        	if(size != 0) {
-        		setId = maxid + i + 1;
-        	}else {
-        		setId = 0;
-        	}
-        	
-            DataCell t = (DataCell)list.get(i);
-            t.setId(setId);
-        }
+    	LogUtil.e(TAG,"addAll function not support");
+    	return;
     }
     
     //we use exception for this function...
-    public void addAll(int index,DataCellList cell) throws MethodException {
+    public void addAll(int index,DataCellList cell) {
     	LogUtil.e(TAG, "addAll function not support");
-    	throw new MethodException();
     }
     
     public void add(int index,DataCell cell) {
@@ -119,32 +88,64 @@ public class DataCellList extends ArrayList<DataCell>{
     }
     
     public DataCell remove(int index) {
-    	//this method is fobbiden
-    	setRemoveAddFlag();
-    	DataCell result = super.remove(index);
-    	clearRemoveAddFlag();
-    	return result;
+    	LogUtil.e(TAG, "remove function not support");
+    	return null;
     }
     
     public boolean remove(DataCell cell) {
     	setRemoveAddFlag();
     	boolean result = super.remove(cell);
+    	size--;
+    	
+    	if(mLastCell == cell) {
+    		mLastCell = get(size - 1);
+    	}
     	clearRemoveAddFlag();
     	return result;
     }
     
     public void removeRange(int fromIndex,int toIndex) {
-    	setRemoveAddFlag();
-    	super.removeRange(fromIndex,toIndex);
-    	clearRemoveAddFlag();
+    	LogUtil.e(TAG, "removeRange function not support");
+    	return;
     }
     
     public void removeAll(DataCellList list) {
     	setRemoveAddFlag();
     	super.removeAll(list);
+    	
+    	size = size - list.size();
+    	
+    	if(list.indexOf(mLastCell) < 0) {
+    		mLastCell = get(size - 1);
+    	}
+    	
     	clearRemoveAddFlag();
     }
+    
+    //we use this method to do.......
+    public DataCell insertDataCell(Object obj) {
+    	setRemoveAddFlag();
+        DataCell d = new DataCell(obj);
+        super.add(d);
+                
+        int maxid = 0;
+    	if(size != 0) {
+    		maxid = mLastCell.getId() + 1;
+    	}else {
+    		maxid = 0;
+    	}
+    	
+    	d.setId(maxid);
+    	mLastCell = d;
+    	size++;
+    	clearRemoveAddFlag();
+    	return d;
+    }
        
+    public int size() {
+        return size;
+    }
+    
     private void setRemoveAddFlag() {
     	if(currentInLoop != 0) {
     		try {

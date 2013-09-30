@@ -48,11 +48,15 @@ public class ExcuteSqlBySingleTable {
     	
     	ArrayList<Object> list = new ArrayList<Object>();
     	
-    	dataList.enterLooper();
-    	for(DataCell dataCell :dataList) {
-            list.add(SqlUtil.copyObj(dataCell.obj));
-        }
-    	dataList.leaveLooper();
+    	if(dataList != null) {
+    	    dataList.enterLooper();
+    	    for(DataCell dataCell :dataList) {
+    	    	if(dataCell.getState() != DataCell.DATA_DELETE) {
+                    list.add(SqlUtil.copyObj(dataCell.obj));
+    	    	}
+            }
+    	    dataList.leaveLooper();
+    	}
     	
     	return list;
     }
@@ -183,18 +187,18 @@ public class ExcuteSqlBySingleTable {
         
         String className = obj.getClass().getName();
         
-        DataCellList dataList = mTableHashMap.get(className);
+        //DataCellList dataList = mTableHashMap.get(className);
         
-        if(dataList == null) {
+        //if(dataList == null) {
             
-        	dataList = new DataCellList();
-        	dataList.add(new DataCell(SqlUtil.copyObj(obj)));
-            StorageNozzle.creatDataList(className, dataList);
-        	return true;
-        }
+        //	dataList = new DataCellList();
+        //	dataList.add(new DataCell(SqlUtil.copyObj(obj)));
+        //    StorageNozzle.creatDataList(className, dataList);
+        //	return true;
+        //}
 
         Object o = SqlUtil.copyObj(obj);
-        StorageNozzle.insertData(className, new DataCell(o));
+        StorageNozzle.insertData(className,o);
         
         return true;
     }
@@ -215,7 +219,7 @@ public class ExcuteSqlBySingleTable {
 
         for(Object obj:objList) {
             Object o = SqlUtil.copyObj(obj);    
-            StorageNozzle.insertData(tableName, new DataCell(o));
+            StorageNozzle.insertData(tableName, o);
         }
         
         return true;

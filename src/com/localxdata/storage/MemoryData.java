@@ -7,7 +7,6 @@ import java.util.HashMap;
 import com.localxdata.index.IndexUtil;
 import com.localxdata.sql.SqlUtil;
 import com.localxdata.struct.DataCell;
-import com.localxdata.util.LogUtil;
 import com.localxdata.util.XmlUtil;
 
 public class MemoryData {
@@ -76,24 +75,38 @@ public class MemoryData {
         SaveHandler.getInstance().addUpdateTable(datacell.obj.getClass().getName(),datacell.getId());
     }
     
-    public static void insertData(String className,DataCell data) {
-        data.setState(DataCell.DATA_INSERT);
-        
+    public static DataCell insertData(String className,Object obj) {        
         DataCellList list = mDataListMap.get(className);
         
         if(list == null) {
         	list = new DataCellList();
-        	list.add(data);
         	mDataListMap.put(className, list);
-        }else {
-        	list.add(data);
         }
         
-        IndexUtil.getInstance().insertIndex(data);
+        DataCell cell = list.insertDataCell(obj);
+        cell.setState(DataCell.DATA_INSERT);
         
-        LogUtil.d("insertData id is:",String.valueOf(data.getId()));
+        IndexUtil.getInstance().insertIndex(cell);
         
-        SaveHandler.getInstance().addInsertTable(className,data.getId());
+        SaveHandler.getInstance().addInsertTable(className,cell.getId());
+        
+        return cell;
+    }
+    
+    public static DataCell insertDataFromXml(String className,Object obj) {
+        DataCellList list = mDataListMap.get(className);
+        
+        if(list == null) {
+        	list = new DataCellList();
+        	mDataListMap.put(className, list);
+        }
+        
+        DataCell cell = list.insertDataCell(obj);
+        cell.setState(DataCell.DATA_IDLE);
+        
+        IndexUtil.getInstance().insertIndex(cell);
+        
+        return cell;
     }
     
     public static void deleteData(String tableName,DataCell data) {
