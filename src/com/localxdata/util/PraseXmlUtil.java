@@ -136,9 +136,7 @@ public class PraseXmlUtil {
                         
                         //DataCell cell = StorageNozzle.insertData(className,mMember);
                         DataCell cell = StorageNozzle.insertDataFromXml(className,mMember);
-                        
-                        IndexUtil.getInstance().insertIndex(cell);
-                        
+                        //IndexUtil.getInstance().insertIndex(cell);
                         //mResultList.add(cell);
                         
                         isFristData = false;

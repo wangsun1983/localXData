@@ -1,5 +1,9 @@
 package com.localxdata.index;
 
+import java.util.ArrayList;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import com.localxdata.struct.DataCell;
 
 public class Node<T extends Comparable> {
@@ -7,20 +11,30 @@ public class Node<T extends Comparable> {
     public static final boolean BLACK = true;
     DataCell dataCell;
     T data;
-    Node parent;
+    Node<?> parent;
     Node left;
     Node right;
-    Node equal;
+    ArrayList<Node> equalList;
     boolean color = true;
 
-    public Node(DataCell dataCell, T data, Node parent, Node left, Node right) {
+    public Node(DataCell dataCell, T data, Node parent, Node left, Node right,ArrayList<Node>equalList) {
         this.dataCell = dataCell;
         this.data = data;
         this.parent = parent;
         this.left = left;
         this.right = right;
+        this.equalList = equalList;
     }
 
+    public Node(Node d) {
+        this.dataCell = d.dataCell;
+        this.data = (T) d.data;
+        this.parent = d.parent;
+        this.left = d.left;
+        this.right = d.right;
+        this.equalList = d.equalList;
+    }
+    
     public boolean equals(Object obj) {
         if (this == obj) {
             return true;

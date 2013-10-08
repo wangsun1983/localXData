@@ -3,6 +3,7 @@ package com.localxdata.index;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import com.localxdata.struct.DataCell;
 
@@ -22,6 +23,17 @@ public class IndexUtil {
         this.mIndexMap = new HashMap();
     }
 
+    public boolean isIndexExist(String table,String member) {
+    	
+        String indexStr = table + ">" + member;
+        IndexTree index = (IndexTree) this.mIndexMap.get(indexStr);
+        if(index == null) {
+        	return false;
+        }	
+        
+        return true;
+    }
+    
     public IndexTree getIndexTree(String table, String member) {
         String indexStr = table + ">" + member;
         IndexTree index = (IndexTree) this.mIndexMap.get(indexStr);
@@ -70,17 +82,55 @@ public class IndexUtil {
         return tree.getNode(action, data);
     }
 
-    public void changeIndexToList(ArrayList<Object> list, Node index) {
+    public void changeIndexToList(HashSet<Object> list, Node index) {
         list.add(index.dataCell.obj);
         if (index.left != null) {
             changeIndexToList(list, index.left);
         }
 
-        if (index.equal != null) {
-            changeIndexToList(list, index.equal);
+        if (index.equalList != null) {
+            //changeIndexToList(list, index.equal);
+        	if(index.equalList.size() != 0) {
+        		for(Object obj:index.equalList) {
+        			Node n = (Node)obj;
+        			list.add(n.dataCell.obj);
+        		}
+        	}
         }
 
-        if (index.right != null)
+        if (index.right != null) {
             changeIndexToList(list, index.right);
+        }
     }
+    
+    
+    public int predictNodeNum(Node index) {
+        int depth = getDepthOfNode(index);
+        return (int)(Math.pow((double)2, (double)depth) - 1);
+    }
+    
+    
+    private int getDepthOfNode(Node index) {
+    	int depth = 0;
+    	Node indexLoop = index;
+    	
+    	while(true) {
+    		depth++;
+    		if(indexLoop.left != null) {
+    		    indexLoop = index.left;
+    		    continue;
+    		}
+    		
+    		if(indexLoop.right != null) {
+    		    indexLoop = index.right;
+    		    continue;
+    		}
+    		
+    		break;
+    	}
+    	
+    	return depth;
+    }
+    
+    
 }

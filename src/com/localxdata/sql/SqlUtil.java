@@ -9,7 +9,14 @@ import java.util.HashSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.localxdata.index.IndexTree;
+import com.localxdata.index.IndexUtil;
+import com.localxdata.index.Node;
+import com.localxdata.storage.DataCellList;
+import com.localxdata.struct.DataCell;
+import com.localxdata.util.LogUtil;
 import com.localxdata.util.PraseParamUtil;
+import com.localxdata.util.PraseSqlUtil;
 import com.localxdata.util.PraseSqlUtil.Action;
 import com.localxdata.util.PraseSqlUtil.ActionTreeNode;
 import com.localxdata.util.PraseSqlUtil.CombineAction;
@@ -17,6 +24,8 @@ import com.localxdata.util.PraseSqlUtil.ComputeAction;
 
 public class SqlUtil {
      
+	public static final String TAG = "SqlUtil";
+	
     public static boolean compareField(Object obj1,Object obj2,Field f1,Field f2,int action) {
         
         boolean result = false;
@@ -396,15 +405,6 @@ public class SqlUtil {
     }
     
     //wangsl
-    public static void checkDataByTree_Index(Object obj,ActionTreeNode treeNode,HashSet result) {
-        
-        //if(treeNode.leftChild != null)
-        
-    }
-    //wangsl
-    
-    
-    //wangsl
     //fast search action start
     public static boolean checkDataByTree(Object obj,ActionTreeNode treeNode) {
         //we check right node first
@@ -456,6 +456,223 @@ public class SqlUtil {
         }
         
         return false;
+    }
+    
+    public static boolean canUseIndex(ArrayList<Action>actionList,String tableName) {
+    	ArrayList<Boolean> canUseIndexList = new ArrayList<Boolean>();
+    	
+    	for(Action action:actionList) {
+    		if ((action instanceof PraseSqlUtil.ComputeAction)) {
+        		PraseSqlUtil.ComputeAction computeAct = (PraseSqlUtil.ComputeAction) action;
+        		
+        		//TODO 
+        		if(computeAct.mAction == Action.SQL_ACTION_NOT_EQUAL) {
+        			return false;
+        		}
+        		//
+        		
+        		if(computeAct.mDataType == Action.DATA_TYPE_TYPE_INT
+        		   ||computeAct.mDataType == Action.DATA_TYPE_FLOAT
+                   ||computeAct.mDataType == Action.DATA_TYPE_LONG ) {
+        		   boolean isExist = IndexUtil.getInstance().isIndexExist(tableName,
+                            computeAct.mFieldName);
+        		   if(!isExist) {
+        			   canUseIndexList.add(false);
+        		   }else {
+        			   canUseIndexList.add(true);
+        		   }
+        		} else {
+        			canUseIndexList.add(false);
+        		}
+        	} else if(action instanceof PraseSqlUtil.CombineAction) {
+        		int size = canUseIndexList.size();
+        		
+        		PraseSqlUtil.CombineAction combineAction = (PraseSqlUtil.CombineAction) action;
+        		Boolean canUseResult1 = canUseIndexList.get(size - 1);
+        		Boolean canUseResult2 = canUseIndexList.get(size - 2);
+        		
+        		if(combineAction.mAction == Action.SQL_ACTION_OR) {
+            		if(canUseResult1 || canUseResult2) {
+            			canUseIndexList.remove(canUseResult1);
+            			canUseIndexList.remove(canUseResult2);
+            			canUseIndexList.add(true);
+            			continue;
+            		}
+            		
+            		return false;
+        		} else {
+            		if(canUseResult1&&canUseResult2) {
+            			canUseIndexList.remove(canUseResult1);
+            			canUseIndexList.remove(canUseResult2);
+            			canUseIndexList.add(true);
+                        continue;
+            		}
+            		
+            		return false;
+        		}
+        	}
+    	}
+    	return true;
+    }
+    
+    public static ArrayList<Object> checkDataByIndex(DataCellList datalist,String className,ArrayList<Action>actionList) {
+    	//HashSet<Object> result = new HashSet<Object>();
+    	
+    	ArrayList<Object>predictResult = new ArrayList<Object>();
+    	
+    	for(Action action:actionList) {
+        	if ((action instanceof PraseSqlUtil.ComputeAction)) {
+        		PraseSqlUtil.ComputeAction computeAct = (PraseSqlUtil.ComputeAction) action;
+        		if(computeAct.mDataType == Action.DATA_TYPE_TYPE_INT
+        		   ||computeAct.mDataType == Action.DATA_TYPE_FLOAT
+                   ||computeAct.mDataType == Action.DATA_TYPE_LONG) {
+        			
+        		   //IndexTree index = IndexUtil.getInstance().getIndexTree(className,
+                   //         computeAct.mFieldName);
+        		   boolean isExist = IndexUtil.getInstance().isIndexExist(className,
+                              computeAct.mFieldName);
+        		   
+        		   if(isExist) {
+        			   IndexTree index = IndexUtil.getInstance().getIndexTree(className,
+        	                            computeAct.mFieldName);
+        			   
+        			   Node searchResult = IndexUtil.getInstance().searchNode(index,
+                               computeAct.mAction,
+                               Integer.valueOf(computeAct.mData));
+        			   predictResult.add(searchResult);
+        		   } else {
+        			   predictResult.add(action);   
+        		   }
+        		}else {
+        			predictResult.add(action);
+        		}
+        	}else if(action instanceof PraseSqlUtil.CombineAction) {
+        		int size = predictResult.size();
+        		
+        		Object obj1 = predictResult.remove(size - 1);
+        		Object obj2 = predictResult.remove(size - 2);
+        		
+         		if(obj1 instanceof Node && obj2 instanceof ComputeAction) {
+         			predictResult.add(checkDataByIndex_1(
+         					(Node)obj1,
+         					(ComputeAction)obj2));
+         			continue;
+         		} else if(obj2 instanceof Node && obj1 instanceof ComputeAction) {
+         			predictResult.add(checkDataByIndex_1(
+         					(Node)obj2,
+         					(ComputeAction)obj1));
+         			continue;
+         		} else if(obj1 instanceof Node && obj2 instanceof Node) {
+         			predictResult.add(checkDataByIndex_2(
+         					(Node)obj1,
+         					(Node)obj2,
+         					action.mAction));
+         			continue;
+         		} else if(obj1 instanceof Node && obj2 instanceof HashSet) {
+         			predictResult.add(checkDataByIndex_3(
+         					(Node)obj1,
+         					(HashSet<Object>)obj2,
+         					action.mAction));
+         			continue;
+         		} else if(obj2 instanceof Node && obj1 instanceof HashSet) {
+         			predictResult.add(checkDataByIndex_3(
+         					(Node)obj2,
+         					(HashSet)obj1,
+         					action.mAction));
+         			continue;
+         		} else if(obj1 instanceof HashSet && obj2 instanceof HashSet) {
+         			predictResult.add(checkDataByIndex_4(
+         					(HashSet<Object>)obj1,
+         					(HashSet<Object>)obj2,
+         					action.mAction));
+         			continue;
+         		}
+        		
+         		LogUtil.e(TAG, "checkDataByIndex no operation!!!");
+        	}
+        	
+        }
+    	
+    	Object result = predictResult.get(0);
+    	
+    	if(result instanceof Node) {
+    		HashSet<Object>list = new HashSet<Object>();
+    		IndexUtil.getInstance().changeIndexToList(list, (Node)result);
+    		result = list;
+    	}
+    	
+    	return  new ArrayList<Object>((HashSet<Object>)result);
+    }
+    
+    private static HashSet<Object> checkDataByIndex_1(Node node,ComputeAction computeAction){
+    	HashSet<Object> list = new HashSet<Object>();
+    	IndexUtil.getInstance().changeIndexToList(list, node);
+    	
+    	HashSet<Object>removeList = new HashSet<Object>();
+    	
+    	for(Object obj:list) {
+    		
+            Field field = null;
+            boolean result = false;
+            try {
+                field = obj.getClass().getField(computeAction.mFieldName);
+                field.setAccessible(true);
+                result = compareData(obj,computeAction.mData,field,computeAction.mDataType,computeAction.mAction);
+            } catch (SecurityException e) {
+                e.printStackTrace();
+            } catch (NoSuchFieldException e) {
+                e.printStackTrace();
+            } catch (IllegalArgumentException e) {
+                e.printStackTrace();
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
+            
+            if(!result) {
+            	removeList.add(obj);
+            }
+    	}
+    	
+    	if(removeList != null||removeList.size() != 0) {
+    	    list.removeAll(removeList);
+    	}
+    	
+    	return list;
+    }
+    
+    private static HashSet<Object> checkDataByIndex_2(Node node1,Node node2,int action){
+    	HashSet<Object> list1 = new HashSet<Object>();
+    	IndexUtil.getInstance().changeIndexToList(list1, node1);
+    	
+    	HashSet<Object> list2 = new HashSet<Object>();
+    	IndexUtil.getInstance().changeIndexToList(list2, node2);
+    	
+    	return checkDataByIndex_4(list1,list2,action);
+    }
+    
+    private static HashSet<Object> checkDataByIndex_3(Node node1,HashSet<Object> list2,int action){
+    	HashSet<Object> list1 = new HashSet<Object>();
+    	IndexUtil.getInstance().changeIndexToList(list1, node1);
+
+    	return checkDataByIndex_4(list1,list2,action);
+    }
+    
+    
+    private static HashSet<Object> checkDataByIndex_4(HashSet<Object>list1,HashSet<Object>list2,int action){
+    	switch(action) {
+	        case Action.SQL_ACTION_OR:
+	    	    list1.addAll(list2);
+	    	    break;
+	    	
+	        case Action.SQL_ACTION_AND:
+	    	    list1.retainAll(list2);
+	    	    break;
+	    	
+	        default:
+	    	    return null;
+	    }
+	
+	    return list1;
     }
     
     public static boolean checkMultiJointByTree(HashMap<String,Object>checkdata,ActionTreeNode treeNode) {

@@ -4,6 +4,7 @@ package com.localxdata.sql;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import com.localxdata.index.IndexTree;
 import com.localxdata.index.IndexUtil;
@@ -22,7 +23,7 @@ public class ExcuteSqlBySingleTable {
     
     protected PraseSqlUtil mPraseSqlInstance;
     protected XmlUtil mXmlUtil;
-    protected static HashMap<String,DataCellList>mTableHashMap;
+    //protected static HashMap<String,DataCellList>mTableHashMap;
     
     protected static ExcuteSqlBySingleTable mInstance = null;
         
@@ -38,7 +39,7 @@ public class ExcuteSqlBySingleTable {
     private ExcuteSqlBySingleTable() {
         mPraseSqlInstance = PraseSqlUtil.getInstance();
         mXmlUtil = XmlUtil.getInstance();
-        mTableHashMap = StorageNozzle.getAllDataList();
+        //mTableHashMap = StorageNozzle.getAllDataList();
     }
     
     //Single Table start
@@ -57,7 +58,7 @@ public class ExcuteSqlBySingleTable {
             }
     	    dataList.leaveLooper();
     	}
-    	
+
     	return list;
     }
     
@@ -69,62 +70,34 @@ public class ExcuteSqlBySingleTable {
     	
         ArrayList<Object> list = new ArrayList<Object>();
         
-        //Get Acton List
         ArrayList<Action>actionList = mPraseSqlInstance.changeSqlToAction(sql);
+                        
         
-        DataCellList dataList = mTableHashMap.get(tableName);
+        DataCellList dataList = StorageNozzle.getDataList(tableName);
         
-        if(dataList == null) {
-            return null;
-        }
-        
-        if (actionList.size() == 1) {
-            PraseSqlUtil.Action act = (PraseSqlUtil.Action) actionList.get(0);
-
-            if ((act instanceof PraseSqlUtil.ComputeAction)) {
-                PraseSqlUtil.ComputeAction computeAct = (PraseSqlUtil.ComputeAction) act;
-                if ((computeAct.mAction == 1)
-                        && ((computeAct.mDataType == 0) || (computeAct.mDataType == 1))) {
-                    IndexTree index = IndexUtil.getInstance().getIndexTree(tableName,
-                            computeAct.mFieldName);
-
-                    Node node = IndexUtil.getInstance().searchNode(index,
-                            computeAct.mAction,
-                            Integer.valueOf(computeAct.mData));
-
-                    ArrayList list1 = new ArrayList();
-                    if(node != null) {
-                        IndexUtil.getInstance().changeIndexToList(list1, node);
-                        LogUtil.d("ExcuteSqlBySingleTable", "list size is "
-                                + list1.size() + "end at "
-                                + System.currentTimeMillis());
-                    }
+        if(SqlUtil.canUseIndex(actionList, tableName)) {
+        	list = SqlUtil.checkDataByIndex(dataList, tableName,actionList);
+        }else {
+        	ActionTreeNode node = mPraseSqlInstance.changeActionListToTree(actionList);
+        	
+            dataList.enterLooper();
+            for(DataCell datacell :dataList) {
+                if(datacell.getState() == DataCell.DATA_DELETE) {
+                    continue;
                 }
-
+              
+                if(SqlUtil.checkDataByTree(datacell.obj,node)) {
+                    list.add(SqlUtil.copyObj(datacell.obj));
+                }   
             }
-
+            dataList.leaveLooper();
         }
-        //wangsl
-        
-        ActionTreeNode node = mPraseSqlInstance.changeActionListToTree(actionList);
-        
-        dataList.enterLooper();
-        for(DataCell datacell :dataList) {
-            if(datacell.getState() == DataCell.DATA_DELETE) {
-                continue;
-            }
-            
-            if(SqlUtil.checkDataByTree(datacell.obj,node)) {
-                list.add(SqlUtil.copyObj(datacell.obj));
-            }   
-        }
-        dataList.leaveLooper();
-        //wangsl
         
         return list;
     }
-    //Single Table end
     
+    
+    //Single Table end
     public void delete(String tableName,String sql) {
         if(sql == null || sql.length() == 0) {
             return;
@@ -133,7 +106,7 @@ public class ExcuteSqlBySingleTable {
         //Get Acton List
         ArrayList<Action>actionList = mPraseSqlInstance.changeSqlToAction(sql);
         
-        DataCellList dataList = mTableHashMap.get(tableName);
+        DataCellList dataList = StorageNozzle.getDataList(tableName);
         
         DataCellList deleteList = new DataCellList(); 
         
@@ -155,7 +128,7 @@ public class ExcuteSqlBySingleTable {
         //Get dataTable;
         String className = obj.getClass().getName();
         
-        DataCellList dataList = mTableHashMap.get(className);
+        DataCellList dataList = StorageNozzle.getDataList(className);
         
         Field[]fields1 = obj.getClass().getDeclaredFields();
         int length = fields1.length;
@@ -187,16 +160,6 @@ public class ExcuteSqlBySingleTable {
         
         String className = obj.getClass().getName();
         
-        //DataCellList dataList = mTableHashMap.get(className);
-        
-        //if(dataList == null) {
-            
-        //	dataList = new DataCellList();
-        //	dataList.add(new DataCell(SqlUtil.copyObj(obj)));
-        //    StorageNozzle.creatDataList(className, dataList);
-        //	return true;
-        //}
-
         Object o = SqlUtil.copyObj(obj);
         StorageNozzle.insertData(className,o);
         
@@ -210,13 +173,6 @@ public class ExcuteSqlBySingleTable {
         
         String tableName = objList.get(0).getClass().getName();
         
-        //DataCellList dataList = mTableHashMap.get(tableName);
-        
-        //if(dataList == null) {
-        //    dataList = new DataCellList();
-        //    StorageNozzle.creatDataList(tableName, dataList);
-        //}
-
         for(Object obj:objList) {
             Object o = SqlUtil.copyObj(obj);    
             StorageNozzle.insertData(tableName, o);
@@ -229,7 +185,7 @@ public class ExcuteSqlBySingleTable {
         
         String tableName = data.getClass().getName();
         
-        DataCellList dataList = mTableHashMap.get(tableName);
+        DataCellList dataList = StorageNozzle.getDataList(tableName);
         
         if(dataList == null) {
             return false;

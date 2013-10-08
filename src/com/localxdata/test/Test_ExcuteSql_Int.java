@@ -37,7 +37,7 @@ public class Test_ExcuteSql_Int implements TestInf {
     }
 
     public boolean Test_Query_Data_Equal_1() {
-    	String str = "data1 == 100";
+    	String str = "data3 == 100";
     	
         System.out.println(getClass() + ":Test_Query_Data_Equal start at "
                 + System.currentTimeMillis());
@@ -93,7 +93,6 @@ public class Test_ExcuteSql_Int implements TestInf {
         }
         return false;
     }
-    
     
     public boolean Test_Query_Data_Update() {
     	//check update
@@ -188,7 +187,7 @@ public class Test_ExcuteSql_Int implements TestInf {
     	return false;
     }
     
-    
+
     public int Test_Index_Create() {
         return 1;
     }
@@ -196,55 +195,55 @@ public class Test_ExcuteSql_Int implements TestInf {
     public void startTest() {
     	System.out.println("-------------start Test_ExcuteSql_Int--------------- ");
     	
-        Test_create_Data(TEST_RECORDS);
+        //Test_create_Data(TEST_RECORDS);
         
-        if(Test_Query_Data_Equal_1()) {
-            System.out.println(getClass() + "Test_Query_Data_Equal_1 OK");	
-        }else {
-        	System.out.println(getClass() + "Test_Query_Data_Equal_1 Fail");
-        }
+        //if(Test_Query_Data_Equal_1()) {
+        //    System.out.println(getClass() + ":Test_Query_Data_Equal_1 OK");	
+        //}else {
+        //	System.out.println(getClass() + ":Test_Query_Data_Equal_1 Fail");
+        //}
         
         if(Test_Query_Data_Equal_2()) {
-        	System.out.println(getClass() + "Test_Query_Data_Equal_2 OK");
+        	System.out.println(getClass() + ":Test_Query_Data_Equal_2 OK");
         }else {
-        	System.out.println(getClass() + "Test_Query_Data_Equal_2 Fail");
+        	System.out.println(getClass() + ":Test_Query_Data_Equal_2 Fail");
         }
         
         if(Test_Query_Data_Equal_3()) {
-        	System.out.println(getClass() + "Test_Query_Data_Equal_3 OK");
+        	System.out.println(getClass() + ":Test_Query_Data_Equal_3 OK");
         }else {
-        	System.out.println(getClass() + "Test_Query_Data_Equal_3 Fail");
+        	System.out.println(getClass() + ":Test_Query_Data_Equal_3 Fail");
         }
         
         if(Test_Query_Data_Not_Equal_1()) {
-            System.out.println(getClass() + "Test_Query_Data_Not_Equal_1 OK");	
+            System.out.println(getClass() + ":Test_Query_Data_Not_Equal_1 OK");	
         }else {
-        	System.out.println(getClass() + "Test_Query_Data_Not_Equal_1 Fail");
+        	System.out.println(getClass() + ":Test_Query_Data_Not_Equal_1 Fail");
         }
         
-        if(Test_Data_LessThan_1()) {
-        	System.out.println(getClass() + "Test_Data_LessThan_1 OK");
-        }else {
-        	System.out.println(getClass() + "Test_Data_LessThan_1 Fail");
-        }
+        //if(Test_Data_LessThan_1()) {
+        //	System.out.println(getClass() + ":Test_Data_LessThan_1 OK");
+        //}else {
+        //	System.out.println(getClass() + ":Test_Data_LessThan_1 Fail");
+        //}
         
-        if(Test_Data_LessThan_2()) {
-        	System.out.println(getClass() + "Test_Data_LessThan_2 OK");
-        }else {
-        	System.out.println(getClass() + "Test_Data_LessThan_2 Fail");
-        }
+        //if(Test_Data_LessThan_2()) {
+        //	System.out.println(getClass() + ":Test_Data_LessThan_2 OK");
+        //}else {
+        //	System.out.println(getClass() + ":Test_Data_LessThan_2 Fail");
+        //}
         
-        if(Test_Query_Data_Update()) {
-            System.out.println(getClass() + "Test_Query_Data_Update OK");
-        }else {
-        	System.out.println(getClass() + "Test_Query_Data_Update Fail");
-        }
+        //if(Test_Query_Data_Update()) {
+        //    System.out.println(getClass() + ":Test_Query_Data_Update OK");
+        //}else {
+        //	System.out.println(getClass() + ":Test_Query_Data_Update Fail");
+        //}
         
-        if(Test_Query_Data_Delete()) {
-            System.out.println(getClass() + "Test_Query_Data_Delete OK");
-        }else {
-        	System.out.println(getClass() + "Test_Query_Data_Delete Fail");
-        }
+        //if(Test_Query_Data_Delete()) {
+        //    System.out.println(getClass() + ":Test_Query_Data_Delete OK");
+        //}else {
+        //	System.out.println(getClass() + ":Test_Query_Data_Delete Fail");
+        //}
         
         System.out.println("-------------end Test_ExcuteSql_Int--------------- ");
     }
