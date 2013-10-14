@@ -16,6 +16,7 @@ public class Node<T extends Comparable> {
     Node right;
     ArrayList<Node> equalList;
     boolean color = true;
+    boolean isDelete = false;
 
     public Node(DataCell dataCell, T data, Node parent, Node left, Node right,ArrayList<Node>equalList) {
         this.dataCell = dataCell;
@@ -49,5 +50,13 @@ public class Node<T extends Comparable> {
                     && (this.parent == target.parent);
         }
         return false;
+    }
+    
+    public void setDelete() {
+    	isDelete = true;
+    }
+    
+    public boolean isDelete() {
+    	return isDelete;
     }
 }

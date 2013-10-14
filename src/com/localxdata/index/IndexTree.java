@@ -2,6 +2,7 @@ package com.localxdata.index;
 
 import java.util.*;
 
+import com.localxdata.storage.DataCellList;
 import com.localxdata.struct.DataCell;
 import com.localxdata.util.PraseSqlUtil.Action;
 
@@ -9,6 +10,9 @@ public class IndexTree<T extends Comparable> {
     //Define the color
     private static final boolean RED = Node.RED;
     private static final boolean BLACK = Node.BLACK;
+    
+    private static final int DELETE = 0;
+    private static final int QUERY = 1;
 
     private Node root;
 
@@ -46,6 +50,9 @@ public class IndexTree<T extends Comparable> {
                 parent.right = newNode;
                 fixAfterInsertion(newNode);
             } else if(cmp == 0) {
+            	if(parent.equalList == null) {
+            		parent.equalList = new ArrayList<Node>();
+            	}
                 parent.equalList.add(newNode);
             } else {
                 parent.left = newNode;
@@ -54,10 +61,33 @@ public class IndexTree<T extends Comparable> {
         }
     }
 
-    public void remove(T ele) {
+    
+    public void remove(Node target) {
 
-        Node target = getNode(ele);
+    	//if the equalist has the same value;
+    	if(target.equalList != null && target.equalList.size() != 0) {
+    		Node placement = (Node) target.equalList.remove(0);
+    		placement.parent = target.parent;
+            
+            if (target.parent == null) {
+                root = placement;
+            }
+        
+            else if (target == target.parent.left) {
+                target.parent.left = placement;
+            }
+        
+            else {        
+                target.parent.right = placement;
+            }
+            target.left = target.right = target.parent = null;
 
+            placement.color = target.color;
+            
+            return;
+    	}
+    	
+    	
         if (target.left != null && target.right != null) {
             Node s = target.left;
 
@@ -111,22 +141,6 @@ public class IndexTree<T extends Comparable> {
         }
     }
 
-    public Node getNode(T ele) {
-        Node p = root;
-        while (p != null) {
-            int cmp = ele.compareTo(p.data);
-            if (cmp < 0) {
-                p = p.left;
-            }
-            else if (cmp > 0) {
-                p = p.right;
-            } else {
-                return p;
-            }
-        }
-        return null;
-    }
-
     public Node getNode(DataCell datacell, T ele) {
         Node p = this.root;
         while (p != null) {
@@ -150,47 +164,146 @@ public class IndexTree<T extends Comparable> {
         return null;
     }
 
-    public Node getNode(int action, T ele) {
-        Node p = this.root;
-        while (p != null) {
-            int cmp = ele.compareTo(p.data);
-            switch (action) {
-            case Action.SQL_ACTION_EQUAL:
-                if (cmp == 0) {
-                    return p;
-                }
-                break;
-                
-            case Action.SQL_ACTION_LESS_THAN:
-                if (cmp > 0) {
-                    return p;
-                }
-
-                if (cmp == 0) {
-                    return p.left;
-                }
-
-                break;
-            case Action.SQL_ACTION_MORE_THAN:
-                if (cmp < 0) {
-                    return p;
-                }
-
-                if (cmp == 0) {
-                    return p.right;
-                }
-                break;
-
-            }
-            if (cmp < 0) {
-                p = p.left;
-            } else if (cmp > 0) {
-                p = p.right;
-            }
-        }
-
-        return null;
+    public HashSet<Object> getNode(int action,T ele) {
+    	HashSet<Object> list = new HashSet<Object>();
+    	nodeToListByCondition(this.root,list,action,ele,QUERY);
+    	return list;
     }
+
+    //public void remove(Node node,int action,Tele ele) {
+    //	
+    //}
+    
+    private void nodeToListByCondition(Node node,HashSet<Object> list,int action ,T ele,int DelOrQuery) {
+    	ArrayList<Node>stack = new ArrayList<Node>();
+    	stack.add(node);
+    	
+    	while(stack.size() != 0) {
+    		Node n = stack.remove(stack.size() - 1);
+    		int cmp = n.data.compareTo(ele);
+    		
+    		switch(action) {
+    		    case Action.SQL_ACTION_EQUAL:
+    		    	if(cmp == 0) {
+    		    		if(DelOrQuery == QUERY) {
+    		    		    list.add(n.dataCell.obj);
+    		    		    if(n.equalList != null && n.equalList.size() != 0) {
+        		    			for(Object _n:n.equalList) {
+        		    				Node mNode = (Node)_n;
+        		    				list.add(mNode.dataCell.obj);
+        		    			}
+        		    		}
+    		    		} else if(DelOrQuery == DELETE) {
+    		    			
+    		    		} 
+
+    		    		return;
+    		    	} else if(cmp < 0) {
+    		    		if(n.right != null) {
+    		    		    stack.add(n.right);
+    		    		}
+    		    	} else {
+    		    		if(n.left != null) {
+    		    			stack.add(n.left);
+    		    		}
+    		    	}
+    			    break;
+    		    case Action.SQL_ACTION_LESS_THAN:
+    		    case Action.SQL_ACTION_LESS_THAN_OR_EQUAL:
+    		    	    if(cmp < 0) {
+    		    	    	if(DelOrQuery == QUERY) {
+    		    	    	    list.add(n.dataCell.obj);
+    		    	    	
+    		    	    	    if(n.equalList != null && n.equalList.size() != 0) {
+    		    	    		    for(Object _n:n.equalList) {
+        		    				    Node mNode = (Node)_n;
+        		    				    list.add(mNode.dataCell.obj);
+        		    			    }
+    		    	    	    }
+    		    	    	} else if(DelOrQuery == DELETE) {
+    		    	    		n.setDelete();
+    		    	    	}
+    		    	    	
+    		    	    	if(n.left != null) {
+    		    	    	    stack.add(n.left);
+    		    	    	}
+    		    	    	
+    		    	    	if(n.right != null) {
+    		    	    		stack.add(n.right);
+    		    	    	}
+    		    	    } else if(cmp > 0) {
+    		    	    	if(n.left != null) {
+    		    	    		stack.add(n.left);
+    		    	    	}
+    		    	    } else if(cmp == 0) {
+    		    	    	if(action == Action.SQL_ACTION_LESS_THAN) {
+    		    	    	    if(n.left != null) {
+    		    	    	        stack.add(n.left);
+    		    	    	    }
+    		    	    	}else if(action == Action.SQL_ACTION_LESS_THAN_OR_EQUAL) {
+    		    	    		if(n.left != null) {
+    		    	    	        stack.add(n.left);
+    		    	    	    }
+    		    	    		
+    		    	    		list.add(n.dataCell.obj);
+    		    	    		if(n.equalList != null && n.equalList.size() != 0) {
+        		    	    		for(Object _n:n.equalList) {
+            		    				Node mNode = (Node)_n;
+            		    				list.add(mNode.dataCell.obj);
+            		    			}
+        		    	    	}
+    		    	    	}
+    		    	    }
+    		    	break;
+    		    	
+                case Action.SQL_ACTION_MORE_THAN:
+                case Action.SQL_ACTION_MORE_THAN_OR_EQUAL:
+                	if(cmp > 0) {
+                		list.add(n.dataCell.obj);
+		    	    	
+		    	    	if(n.equalList != null && n.equalList.size() != 0) {
+		    	    		for(Object _n:n.equalList) {
+    		    				Node mNode = (Node)_n;
+    		    				list.add(mNode.dataCell.obj);
+    		    			}
+		    	    	}
+		    	    	
+		    	    	if(n.left != null) {
+		    	    	    stack.add(n.left);
+		    	    	}
+		    	    	
+		    	    	if(n.right != null) {
+		    	    		stack.add(n.right);
+		    	    	}
+                	}else if(cmp < 0) {
+                		if(n.right != null) {
+		    	    		stack.add(n.right);
+		    	    	}
+                	}else if(cmp == 0) {
+		    	    	if(action == Action.SQL_ACTION_MORE_THAN) {
+		    	    	    if(n.right != null) {
+		    	    	        stack.add(n.left);
+		    	    	    }
+		    	    	}else if(action == Action.SQL_ACTION_MORE_THAN_OR_EQUAL) {
+		    	    		if(n.right != null) {
+		    	    	        stack.add(n.left);
+		    	    	    }
+		    	    		
+		    	    		list.add(n.dataCell.obj);
+		    	    		if(n.equalList != null && n.equalList.size() != 0) {
+    		    	    		for(Object _n:n.equalList) {
+        		    				Node mNode = (Node)_n;
+        		    				list.add(mNode.dataCell.obj);
+        		    			}
+    		    	    	}
+		    	    	}
+		    	    }
+                	
+    		    	break;
+    		}
+    	}
+    }
+    
 
     public List<Node> breadthFirst() {
         Queue<Node> queue = new ArrayDeque<Node>();

@@ -1,10 +1,10 @@
-1.We should use the index to make search fast
+1.We should use the index to make search fast (FINISH)
   ->1.query condition one ->FINISH (eg: a > 100)
   ->2.multi query condition ->TODO(eg: a > 100 && b < 100)
   
-2.Add equal condition.
+2.Add equal condition.(FINISH)
 
-3.Add delete synchronization.
+3.Add delete synchronization.(TODO)
   eg:Class Node Member:ArrayList<Node> equalList
   
-4.Add remove index operation...
+4.Add remove index operation...(TODO)

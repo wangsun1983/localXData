@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import com.localxdata.storage.DataCellList;
 import com.localxdata.struct.DataCell;
 
 public class IndexUtil {
@@ -74,11 +75,7 @@ public class IndexUtil {
         }
     }
 
-    public Node searchNode(IndexTree tree, DataCell datacell, Comparable data) {
-        return tree.getNode(datacell, data);
-    }
-
-    public Node searchNode(IndexTree tree, int action, Comparable data) {
+    public HashSet<Object> searchNode(IndexTree tree, int action, Comparable data) {
         return tree.getNode(action, data);
     }
 

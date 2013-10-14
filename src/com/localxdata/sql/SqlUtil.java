@@ -536,7 +536,7 @@ public class SqlUtil {
         			   IndexTree index = IndexUtil.getInstance().getIndexTree(className,
         	                            computeAct.mFieldName);
         			   
-        			   Node searchResult = IndexUtil.getInstance().searchNode(index,
+        			   HashSet<Object> searchResult = IndexUtil.getInstance().searchNode(index,
                                computeAct.mAction,
                                Integer.valueOf(computeAct.mData));
         			   predictResult.add(searchResult);
@@ -601,7 +601,7 @@ public class SqlUtil {
     		result = list;
     	}
     	
-    	return  new ArrayList<Object>((HashSet<Object>)result);
+    	return new ArrayList<Object>((HashSet<Object>)result);
     }
     
     private static HashSet<Object> checkDataByIndex_1(Node node,ComputeAction computeAction){

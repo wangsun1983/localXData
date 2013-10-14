@@ -46,6 +46,7 @@ public class Test_ExcuteSql_Int implements TestInf {
         System.out.println(getClass() + ":Test_Query_Data_Equal end at "
                 + System.currentTimeMillis());
 
+        System.out.println("list size is " + list.size());
         if(list.size() == 1) {
         	return true;
         }
@@ -81,11 +82,11 @@ public class Test_ExcuteSql_Int implements TestInf {
     public boolean Test_Query_Data_Not_Equal_1() {
     	String str = "data1 != 100";
     	
-        System.out.println(getClass() + ":Test_Query_Data_Equal start at "
+        System.out.println(getClass() + ":Test_Query_Data_Not_Equal start at "
                 + System.currentTimeMillis());
         ArrayList list = this.sqlExcute.query(Test_Class_SmallData_Int.class
                 .getName(), str);
-        System.out.println(getClass() + ":Test_Query_Data_Equal end at "
+        System.out.println(getClass() + ":Test_Query_Data_Not_Equal end at "
                 + System.currentTimeMillis());
 
         if(list.size() == TEST_RECORDS - 1) {
@@ -187,6 +188,42 @@ public class Test_ExcuteSql_Int implements TestInf {
     	return false;
     }
     
+    
+    public boolean Test_Data_LessThan_3() {
+    	ArrayList<Object> list = this.sqlExcute.query(Test_Class_SmallData_Int.class.getName(), "data3 < 100 && data3 > 50");
+    	
+    	if(list.size() == 49) {
+    		return true;
+    	}
+    	
+    	return false;
+    }
+    
+    public boolean Test_Data_MoreThan_1() {
+    	ArrayList<Object> list = this.sqlExcute.query(Test_Class_SmallData_Int.class.getName(), "data3 >" + (TEST_RECORDS-100));
+    	
+        if(list.size() == 99) {
+        	return true;
+        }	
+        
+        return false;
+    }
+
+    
+    public boolean Test_Data_MoreThan_2() {
+        ArrayList<Object> list = this.sqlExcute.query(Test_Class_SmallData_Int.class.getName(), "data3 >=" + (TEST_RECORDS-100));
+    	
+        if(list.size() == 100) {
+        	return true;
+        }	
+        
+        return false;
+    }
+    
+    public boolean Test_Data_MoreThan_3() {
+       return false;
+    }
+    
 
     public int Test_Index_Create() {
         return 1;
@@ -197,11 +234,11 @@ public class Test_ExcuteSql_Int implements TestInf {
     	
         //Test_create_Data(TEST_RECORDS);
         
-        //if(Test_Query_Data_Equal_1()) {
-        //    System.out.println(getClass() + ":Test_Query_Data_Equal_1 OK");	
-        //}else {
-        //	System.out.println(getClass() + ":Test_Query_Data_Equal_1 Fail");
-        //}
+        if(Test_Query_Data_Equal_1()) {
+            System.out.println(getClass() + ":Test_Query_Data_Equal_1 OK");	
+        }else {
+        	System.out.println(getClass() + ":Test_Query_Data_Equal_1 Fail");
+        }
         
         if(Test_Query_Data_Equal_2()) {
         	System.out.println(getClass() + ":Test_Query_Data_Equal_2 OK");
@@ -221,17 +258,35 @@ public class Test_ExcuteSql_Int implements TestInf {
         	System.out.println(getClass() + ":Test_Query_Data_Not_Equal_1 Fail");
         }
         
-        //if(Test_Data_LessThan_1()) {
-        //	System.out.println(getClass() + ":Test_Data_LessThan_1 OK");
-        //}else {
-        //	System.out.println(getClass() + ":Test_Data_LessThan_1 Fail");
-        //}
+        if(Test_Data_LessThan_1()) {
+        	System.out.println(getClass() + ":Test_Data_LessThan_1 OK");
+        }else {
+        	System.out.println(getClass() + ":Test_Data_LessThan_1 Fail");
+        }
         
-        //if(Test_Data_LessThan_2()) {
-        //	System.out.println(getClass() + ":Test_Data_LessThan_2 OK");
-        //}else {
-        //	System.out.println(getClass() + ":Test_Data_LessThan_2 Fail");
-        //}
+        if(Test_Data_LessThan_2()) {
+        	System.out.println(getClass() + ":Test_Data_LessThan_2 OK");
+        }else {
+        	System.out.println(getClass() + ":Test_Data_LessThan_2 Fail");
+        }
+        
+        if(Test_Data_LessThan_3()) {
+        	System.out.println(getClass() + ":Test_Data_LessThan_3 OK");
+        }else {
+        	System.out.println(getClass() + ":Test_Data_LessThan_3 Fail");
+        }
+        
+        if(Test_Data_MoreThan_1()) {
+        	System.out.println(getClass() + ":Test_Data_MoreThan_1 OK");
+        }else {
+        	System.out.println(getClass() + ":Test_Data_MoreThan_1 Fail");
+        }
+        
+        if(Test_Data_MoreThan_2()) {
+        	System.out.println(getClass() + ":Test_Data_MoreThan_2 OK");
+        }else {
+        	System.out.println(getClass() + ":Test_Data_MoreThan_2 Fail");
+        }
         
         //if(Test_Query_Data_Update()) {
         //    System.out.println(getClass() + ":Test_Query_Data_Update OK");
