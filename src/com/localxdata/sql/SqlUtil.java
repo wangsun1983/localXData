@@ -26,6 +26,9 @@ public class SqlUtil {
      
 	public static final String TAG = "SqlUtil";
 	
+    public static final int SEARCH_REASON_QUERY = IndexUtil.SEARCH_REASON_QUERY;
+    public static final int SEARCH_REASON_DEL = IndexUtil.SEARCH_REASON_DEL;
+	
     public static boolean compareField(Object obj1,Object obj2,Field f1,Field f2,int action) {
         
         boolean result = false;
@@ -515,9 +518,28 @@ public class SqlUtil {
     	return true;
     }
     
-    public static ArrayList<Object> checkDataByIndex(DataCellList datalist,String className,ArrayList<Action>actionList) {
-    	//HashSet<Object> result = new HashSet<Object>();
+    //we can only use index to do delete for only one action.......
+    //public static void deleteDataByIndex(String className,Action action) {
     	
+    //	if(action instanceof PraseSqlUtil.ComputeAction) {
+    //		PraseSqlUtil.ComputeAction computeAct = (PraseSqlUtil.ComputeAction) action;
+    //		if(computeAct.mDataType == Action.DATA_TYPE_TYPE_INT
+    //     		   ||computeAct.mDataType == Action.DATA_TYPE_FLOAT
+    //                ||computeAct.mDataType == Action.DATA_TYPE_LONG) {
+    		 			   
+    //			IndexTree index = IndexUtil.getInstance().getIndexTree(className,
+    //                    computeAct.mFieldName);
+    			
+   	//		    IndexUtil.getInstance().removeByIndex(index, 
+   	//		    		action.mAction, 
+   	//		    		Integer.valueOf(computeAct.mData));
+    //		}
+    //	}
+    //	
+    //	LogUtil.e(TAG, "delteDataByIndex error!!");
+    //}
+    
+    public static ArrayList<Object> checkDataByIndex(DataCellList datalist,String className,ArrayList<Action>actionList,int reason) {
     	ArrayList<Object>predictResult = new ArrayList<Object>();
     	
     	for(Action action:actionList) {
@@ -538,7 +560,7 @@ public class SqlUtil {
         			   
         			   HashSet<Object> searchResult = IndexUtil.getInstance().searchNode(index,
                                computeAct.mAction,
-                               Integer.valueOf(computeAct.mData));
+                               Integer.valueOf(computeAct.mData),reason);
         			   predictResult.add(searchResult);
         		   } else {
         			   predictResult.add(action);   

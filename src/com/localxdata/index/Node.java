@@ -14,17 +14,28 @@ public class Node<T extends Comparable> {
     Node<?> parent;
     Node left;
     Node right;
+    Node equalParent;
     ArrayList<Node> equalList;
     boolean color = true;
     boolean isDelete = false;
+    
+    //if the node was marked as deleted,
+    //mVisitRef should be used to record the times
+    //that the noded was visited.
+    //if mVisitRef is over a particular value(MAX_VISIT_REF)
+    //the node will be delete really.
+    private static final int MAX_VISIT_REF = 200;
+    
+    int mVisitRef = 0; 
 
-    public Node(DataCell dataCell, T data, Node parent, Node left, Node right,ArrayList<Node>equalList) {
+    public Node(DataCell dataCell, T data, Node parent, Node left, Node right,ArrayList<Node>equalList,Node equalparent) {
         this.dataCell = dataCell;
         this.data = data;
         this.parent = parent;
         this.left = left;
         this.right = right;
         this.equalList = equalList;
+        this.equalParent = equalparent;
     }
 
     public Node(Node d) {
@@ -34,6 +45,7 @@ public class Node<T extends Comparable> {
         this.left = d.left;
         this.right = d.right;
         this.equalList = d.equalList;
+        this.equalParent = d.equalParent;
     }
     
     public boolean equals(Object obj) {
@@ -52,11 +64,23 @@ public class Node<T extends Comparable> {
         return false;
     }
     
-    public void setDelete() {
+    public void markDelete() {
     	isDelete = true;
     }
     
     public boolean isDelete() {
     	return isDelete;
+    }
+    
+    public void addVisitRef() {
+    	mVisitRef++;
+    }
+    
+    public boolean isNeedRealDelete() {
+    	if(mVisitRef == MAX_VISIT_REF) {
+    		return true; 
+    	}
+    	
+    	return false;
     }
 }

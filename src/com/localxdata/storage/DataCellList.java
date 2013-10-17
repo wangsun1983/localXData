@@ -1,6 +1,7 @@
 package com.localxdata.storage;
 
 import java.util.ArrayList;
+import java.util.Collection;
 
 import com.localxdata.struct.DataCell;
 import com.localxdata.util.LogUtil;
@@ -120,6 +121,14 @@ public class DataCellList extends ArrayList<DataCell>{
     	}
     	
     	clearRemoveAddFlag();
+    }
+    
+    public boolean removeAll(Collection<?> c) {
+    	setRemoveAddFlag();
+    	boolean result = super.removeAll(c);
+    	clearRemoveAddFlag();
+    	
+    	return result;
     }
     
     //we use this method to do.......

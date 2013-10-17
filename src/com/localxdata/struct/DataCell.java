@@ -1,5 +1,9 @@
 package com.localxdata.struct;
 
+import java.util.ArrayList;
+
+import com.localxdata.index.Node;
+
 public class DataCell {
     public static final int DATA_IDLE = 0;
     public static final int DATA_UPDATE = 1;
@@ -11,9 +15,12 @@ public class DataCell {
     
     public Object obj;
     
+    public ArrayList<Node> nodeList; //we can use this node to remove index
+    
     public DataCell(Object obj) {
         this.obj = obj;
         
+        nodeList = new ArrayList<Node>();
     }
     
     public void setId(int id) {
@@ -30,5 +37,14 @@ public class DataCell {
     
     public int getState() {
         return this.dataState;
+    }
+    
+    public void addNode(Node node) {
+    	//this.node = node;
+    	nodeList.add(node);
+    }
+    
+    public ArrayList<Node> getNodeList() {
+    	return nodeList;
     }
 }

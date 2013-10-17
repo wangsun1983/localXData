@@ -11,6 +11,9 @@ import com.localxdata.struct.DataCell;
 public class IndexUtil {
     private static IndexUtil mInstance;
     private HashMap<String, IndexTree> mIndexMap;
+    
+    public static final int SEARCH_REASON_QUERY = 0;
+    public static final int SEARCH_REASON_DEL = 1;
 
     public static IndexUtil getInstance() {
         if (mInstance == null) {
@@ -40,7 +43,7 @@ public class IndexUtil {
         IndexTree index = (IndexTree) this.mIndexMap.get(indexStr);
 
         if (index == null) {
-            index = new IndexTree();
+            index = new IndexTree(table);
             this.mIndexMap.put(indexStr, index);
         }
 
@@ -75,10 +78,14 @@ public class IndexUtil {
         }
     }
 
-    public HashSet<Object> searchNode(IndexTree tree, int action, Comparable data) {
-        return tree.getNode(action, data);
+    public HashSet<Object> searchNode(IndexTree tree, int action, Comparable data,int reason) {
+    	return tree.getNode(action, data,reason);
     }
-
+    
+    public void removeNode(Node n) {
+        n.markDelete();
+    }
+    
     public void changeIndexToList(HashSet<Object> list, Node index) {
         list.add(index.dataCell.obj);
         if (index.left != null) {
@@ -100,6 +107,10 @@ public class IndexUtil {
         }
     }
     
+    
+    //public void removeByIndex(IndexTree tree, int action, Comparable data) {
+    //	tree.removeByIndex(action, data);
+    //}
     
     public int predictNodeNum(Node index) {
         int depth = getDepthOfNode(index);

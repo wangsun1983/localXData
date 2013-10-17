@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import com.localxdata.index.IndexUtil;
+import com.localxdata.index.Node;
 import com.localxdata.sql.SqlUtil;
 import com.localxdata.struct.DataCell;
 import com.localxdata.util.XmlUtil;
@@ -113,5 +114,10 @@ public class MemoryData {
         data.setState(DataCell.DATA_DELETE);
         
         SaveHandler.getInstance().addDeleteTable(tableName,data.getId());
+        
+        //we should also delete index
+        for(Node n:data.nodeList) {
+        	IndexUtil.getInstance().removeNode(n);
+        }
     }
 }

@@ -4,6 +4,7 @@ package com.localxdata.sql;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 
+import com.localxdata.index.IndexUtil;
 import com.localxdata.storage.DataCellList;
 import com.localxdata.storage.StorageNozzle;
 import com.localxdata.struct.DataCell;
@@ -70,7 +71,14 @@ public class ExcuteSqlBySingleTable {
         DataCellList dataList = StorageNozzle.getDataList(tableName);
         
         if(SqlUtil.canUseIndex(actionList, tableName)) {
-        	list = SqlUtil.checkDataByIndex(dataList, tableName,actionList);
+        	list = SqlUtil.checkDataByIndex(dataList, tableName,actionList,SqlUtil.SEARCH_REASON_QUERY);
+        	ArrayList<Object>result = new ArrayList<Object>();
+        	for(Object o:list) {
+        		result.add(SqlUtil.copyObj(o));
+        	}
+        	
+        	list = null;
+        	list = result;
         }else {
         	ActionTreeNode node = mPraseSqlInstance.changeActionListToTree(actionList);
         	
@@ -102,10 +110,21 @@ public class ExcuteSqlBySingleTable {
         
         DataCellList dataList = StorageNozzle.getDataList(tableName);
         
-        DataCellList deleteList = new DataCellList(); 
+        ArrayList<Object> deleteList = new ArrayList<Object>();
         
+        //if there is only a sql action,we can user index to do remove action...
+        //else if there are a few sql actions,but all the actions can be able to
+        //excuted by index,we can do query first,then remove the query result..
         if(SqlUtil.canUseIndex(actionList, tableName)) {
-        	//TODO
+        	deleteList = SqlUtil.checkDataByIndex(dataList, tableName,actionList,SqlUtil.SEARCH_REASON_DEL);
+            //    dataList.removeAll(deleteList);
+        	for(Object obj :deleteList) {
+        		if(obj instanceof DataCell) {
+        			DataCell cell = (DataCell)obj;
+        		    StorageNozzle.deleteData(tableName, cell);
+        		}
+        	}
+        	
         } else {
             dataList.enterLooper();
             for(DataCell datacell :dataList) {

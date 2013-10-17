@@ -46,8 +46,13 @@ public class StorageNozzle {
     
     public static void deleteData(String className,DataCell data) {
         MemoryData.deleteData(className, data);
+        //we also need to remove index;
     }
     
+    //this method is porvided for index......
+    public static void deleteDataDirectly(String className,DataCell data) {
+    	MemoryData.deleteData(className, data);
+    }
     
     public static void initStorage() {
     	TableControl.init();

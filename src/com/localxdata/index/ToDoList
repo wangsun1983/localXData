@@ -4,7 +4,16 @@
   
 2.Add equal condition.(FINISH)
 
-3.Add delete synchronization.(TODO)
-  eg:Class Node Member:ArrayList<Node> equalList
+3.Add delete/add synchronization.Also insert index and delete index should
+  not be done at the same time(TODO!!)
+  eg:
+  1.Class Node Member:ArrayList<Node> equalList
+     
   
 4.Add remove index operation...(TODO)
+ ->we can add a flag to mark whether the node need to be deleted.
+   if we visit the node over 100 times,we do real delete action.
+   Also,if we add a new node,if we can replace the delete node with the
+   new node,speed will be faster.
+   
+   
