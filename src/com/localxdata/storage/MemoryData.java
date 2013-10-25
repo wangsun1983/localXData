@@ -3,7 +3,9 @@ package com.localxdata.storage;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 
+import com.localxdata.index.IndexTree;
 import com.localxdata.index.IndexUtil;
 import com.localxdata.index.Node;
 import com.localxdata.sql.SqlUtil;
@@ -56,7 +58,7 @@ public class MemoryData {
     public static void updateData(DataCell datacell,Object srcObj,String[] valueName) {
         
         datacell.setState(DataCell.DATA_UPDATE);
-        
+      
         for(String v:valueName) {
             try {
                 Field f1 = srcObj.getClass().getField(v);
@@ -74,6 +76,16 @@ public class MemoryData {
         }
         
         SaveHandler.getInstance().addUpdateTable(datacell.obj.getClass().getName(),datacell.getId());
+        
+        for(String indexName:valueName) {
+        	//IndexTree tree = IndexUtil.getInstance().getIndexTree(datacell.obj.getClass().getName(), indexName);
+        	
+        	Node node = datacell.getNodeMap().get(indexName);
+        	if(node!=null) {
+        		IndexUtil.getInstance().removeNode(node);
+        		IndexUtil.getInstance().insertIndex(datacell,indexName);
+        	}
+        }
     }
     
     public static DataCell insertData(String className,Object obj) {        
@@ -116,8 +128,12 @@ public class MemoryData {
         SaveHandler.getInstance().addDeleteTable(tableName,data.getId());
         
         //we should also delete index
-        for(Node n:data.nodeList) {
-        	IndexUtil.getInstance().removeNode(n);
+        Iterator iterator = data.getNodeMap().keySet().iterator();
+        
+        while(iterator.hasNext()) {
+        	Node node = data.getNodeMap().get(iterator.next());
+        	IndexUtil.getInstance().removeNode(node);
         }
+        
     }
 }

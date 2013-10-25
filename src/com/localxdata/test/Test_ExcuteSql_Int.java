@@ -132,7 +132,6 @@ public class Test_ExcuteSql_Int implements TestInf {
     }
     
     public boolean Test_Query_Data_Delete() {
-    	
     	ArrayList<Object>list = getDatalist();   
     	boolean isTestDataExist = false;
         for(Object obj:list) {
@@ -151,9 +150,10 @@ public class Test_ExcuteSql_Int implements TestInf {
         
     	Test_Class_SmallData_Int data = new Test_Class_SmallData_Int();
     	
+    	System.out.println("Test_Query_Data_Delete start at " + System.currentTimeMillis());
     	this.sqlExcute.delete(Test_Class_SmallData_Int.class.getName(), 
     			              "data3 == 1");
-    	
+    	System.out.println("Test_Query_Data_Delete end at " + System.currentTimeMillis());
     	//check
     	list = getDatalist();
         for(Object obj:list) {
@@ -191,7 +191,6 @@ public class Test_ExcuteSql_Int implements TestInf {
     
     public boolean Test_Data_LessThan_3() {
     	ArrayList<Object> list = this.sqlExcute.query(Test_Class_SmallData_Int.class.getName(), "data3 < 100 && data3 > 50");
-    	
     	if(list.size() == 49) {
     		return true;
     	}
@@ -288,17 +287,17 @@ public class Test_ExcuteSql_Int implements TestInf {
         	System.out.println(getClass() + ":Test_Data_MoreThan_2 Fail");
         }
         
-        //if(Test_Query_Data_Update()) {
-        //    System.out.println(getClass() + ":Test_Query_Data_Update OK");
-        //}else {
-        //	System.out.println(getClass() + ":Test_Query_Data_Update Fail");
-        //}
+        if(Test_Query_Data_Update()) {
+            System.out.println(getClass() + ":Test_Query_Data_Update OK");
+        }else {
+        	System.out.println(getClass() + ":Test_Query_Data_Update Fail");
+        }
         
-        //if(Test_Query_Data_Delete()) {
-        //    System.out.println(getClass() + ":Test_Query_Data_Delete OK");
-        //}else {
-        //	System.out.println(getClass() + ":Test_Query_Data_Delete Fail");
-        //}
+        if(Test_Query_Data_Delete()) {
+            System.out.println(getClass() + ":Test_Query_Data_Delete OK");
+        }else {
+        	System.out.println(getClass() + ":Test_Query_Data_Delete Fail");
+        }
         
         System.out.println("-------------end Test_ExcuteSql_Int--------------- ");
     }

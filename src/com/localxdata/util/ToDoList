@@ -1,1 +1,5 @@
 1.We should update the file whose data has been changed(XmlUtil.java) ->TODO
+
+2.We should user comparable instead of distinguishing type(int/log/double) ->TODO
+
+3.We should use index to make "not equal action" operate fast.  ->TODO

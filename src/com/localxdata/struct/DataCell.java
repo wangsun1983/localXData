@@ -1,6 +1,7 @@
 package com.localxdata.struct;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import com.localxdata.index.Node;
 
@@ -15,12 +16,14 @@ public class DataCell {
     
     public Object obj;
     
-    public ArrayList<Node> nodeList; //we can use this node to remove index
+    //because a DataCell may have some indexes,so we should use a list
+    //to save all the node.
+    public HashMap<String,Node> nodeMap; 
     
     public DataCell(Object obj) {
         this.obj = obj;
         
-        nodeList = new ArrayList<Node>();
+        nodeMap = new HashMap<String,Node>();
     }
     
     public void setId(int id) {
@@ -39,12 +42,11 @@ public class DataCell {
         return this.dataState;
     }
     
-    public void addNode(Node node) {
-    	//this.node = node;
-    	nodeList.add(node);
+    public void addNode(String indexName,Node node) {
+    	nodeMap.put(indexName, node);
     }
     
-    public ArrayList<Node> getNodeList() {
-    	return nodeList;
+    public HashMap<String,Node> getNodeMap() {
+    	return nodeMap;
     }
 }

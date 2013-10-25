@@ -34,7 +34,6 @@ public class XmlUtil {
 
     private DocumentBuilderFactory mFactory;
     private DocumentBuilder mBuilder;
-    private Document mDoc;
 
     private static final String TAG = "XmlUtil";
 
@@ -114,8 +113,6 @@ public class XmlUtil {
     private XmlUtil() throws ParserConfigurationException {
         mFactory = DocumentBuilderFactory.newInstance();
         mBuilder = mFactory.newDocumentBuilder();
-
-        mDoc = mBuilder.newDocument();
     }
 
     public static XmlUtil getInstance() {

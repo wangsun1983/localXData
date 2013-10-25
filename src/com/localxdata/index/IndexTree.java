@@ -5,8 +5,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.localxdata.sql.SqlUtil;
-import com.localxdata.storage.DataCellList;
-import com.localxdata.storage.StorageNozzle;
 import com.localxdata.struct.DataCell;
 import com.localxdata.util.PraseSqlUtil.Action;
 
@@ -83,7 +81,7 @@ public class IndexTree<T extends Comparable> {
     	
         if (root == null) {
             root = new Node(dataCell, ele, null, null, null,null,null);
-            dataCell.addNode(root);
+            dataCell.addNode(className,root);
         } else {
             Node current = root;
             Node parent = null;
@@ -91,8 +89,45 @@ public class IndexTree<T extends Comparable> {
 
             do {
             	//If node can be replace,we should replace the node instead of deleting.....
-            	if(current.isDelete) {
+            	//TODO need test...
+            	if(current.isDelete()) {
+            		boolean canReplace = false;
             		
+            		if(current.data.compareTo(ele) == 0) {
+            			current.dataCell = null;
+            	    	current.dataCell = dataCell;
+            	    	current.data = ele;
+            	    	
+            	    	current.reUse();
+            	    	dataCell.addNode(className, current);
+            	    	return;
+            		}
+            		
+            	    if(current.left != null) {
+            	        int cmpresult = current.left.data.compareTo(ele);
+            	        if(cmpresult < 0) {
+            	        	canReplace = true;
+            	        }
+            	    }
+            	    
+            	    if(canReplace) {
+            	    	if(current.right != null) {
+            	    	    int cmpresult = current.right.data.compareTo(ele);
+            	    	    if(cmpresult < 0) {
+            	        	    canReplace = false;
+                            }
+            	    	}
+            	    }
+            	    
+            	    if(canReplace) {
+            	    	current.dataCell = null;
+            	    	current.dataCell = dataCell;
+            	    	current.data = ele;
+            	    	
+            	    	current.reUse();
+            	    	dataCell.addNode(className, current);
+            	    	return;
+            	    }
             	}
 
                 parent = current;
@@ -103,13 +138,12 @@ public class IndexTree<T extends Comparable> {
                 } else if(cmp == 0) {
                 	break;
                 } else if(cmp < 0){
-
                     current = current.left;
                 }
             } while (current != null);
 
             Node newNode = new Node(dataCell, ele, parent, null, null,null,null);
-            dataCell.addNode(newNode);
+            dataCell.addNode(className,newNode);
             
             if (cmp > 0) {
                 parent.right = newNode;
@@ -132,7 +166,7 @@ public class IndexTree<T extends Comparable> {
     }
 
     
-    public void remove(Node target) {
+    private void remove(Node target) {
     	
     	writeOrReadLock.lock();
     	queryLock.lock();
@@ -230,18 +264,6 @@ public class IndexTree<T extends Comparable> {
     	writeOrReadLock.unlock();
     	queryLock.unlock();
     }
-
-    //public void removeByIndex(int action, T ele) {
-    //	if(queryLock.tryLock()) {
-    //		writeOrReadLock.lock();
-    //	} else {
-    //		queryLock.unlock();
-    //	}
-    	
-    //	HashSet<Object> list = new HashSet<Object>();
-    //	nodeToListByCondition(this.root,list,action,ele,DELETE,false);
-    //	writeOrReadLock.unlock();
-    //}
     
     public HashSet<Object> getNode(int action,T ele,int reason) {
     	if(queryLock.tryLock()) {
@@ -259,7 +281,7 @@ public class IndexTree<T extends Comparable> {
     
     
     private void nodeToList(Node n,HashSet<Object> list,int reason) {
-    	if(n.isDelete) {
+    	if(n.isDelete()) {
     		n.addVisitRef();
     	} else {
     		switch(reason) {
@@ -279,7 +301,7 @@ public class IndexTree<T extends Comparable> {
     	
 	    if(n.equalList != null && n.equalList.size() != 0) {
 			for(Object _n:n.equalList) {
-				if(n.isDelete) {
+				if(n.isDelete()) {
 					n.addVisitRef();
 					if(n.isNeedRealDelete()) {
 						mDaemon.addRemoveNode(n);
@@ -300,21 +322,6 @@ public class IndexTree<T extends Comparable> {
 			}
 		}
     }
-    
-    private void markNodeToDelete(Node n) {
-    	
-    	StorageNozzle.deleteDataDirectly(className, n.dataCell);
-    	n.markDelete();
-    	
-    	if(n.equalList != null && n.equalList.size() != 0) {
-    		for(Object obj:n.equalList) {
-    			Node mNode = (Node)obj;
-    			mNode.markDelete();
-    			StorageNozzle.deleteDataDirectly(className, mNode.dataCell);
-    		}
-    	}
-    }
-    
     
     private void nodeToListByCondition(Node node,HashSet<Object> list,int action ,T ele,int reason) {
     	ArrayList<Node>stack = new ArrayList<Node>();
@@ -611,6 +618,10 @@ public class IndexTree<T extends Comparable> {
             list.addAll(inIterator(node.right));
         }
         return list;
+    }
+    
+    public String getTreeName() {
+    	return this.className;
     }
 
 }

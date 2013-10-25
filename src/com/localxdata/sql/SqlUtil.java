@@ -518,28 +518,7 @@ public class SqlUtil {
     	return true;
     }
     
-    //we can only use index to do delete for only one action.......
-    //public static void deleteDataByIndex(String className,Action action) {
-    	
-    //	if(action instanceof PraseSqlUtil.ComputeAction) {
-    //		PraseSqlUtil.ComputeAction computeAct = (PraseSqlUtil.ComputeAction) action;
-    //		if(computeAct.mDataType == Action.DATA_TYPE_TYPE_INT
-    //     		   ||computeAct.mDataType == Action.DATA_TYPE_FLOAT
-    //                ||computeAct.mDataType == Action.DATA_TYPE_LONG) {
-    		 			   
-    //			IndexTree index = IndexUtil.getInstance().getIndexTree(className,
-    //                    computeAct.mFieldName);
-    			
-   	//		    IndexUtil.getInstance().removeByIndex(index, 
-   	//		    		action.mAction, 
-   	//		    		Integer.valueOf(computeAct.mData));
-    //		}
-    //	}
-    //	
-    //	LogUtil.e(TAG, "delteDataByIndex error!!");
-    //}
-    
-    public static ArrayList<Object> checkDataByIndex(DataCellList datalist,String className,ArrayList<Action>actionList,int reason) {
+    public static ArrayList<Object> checkDataByIndex(String className,ArrayList<Action>actionList,int reason) {
     	ArrayList<Object>predictResult = new ArrayList<Object>();
     	
     	for(Action action:actionList) {

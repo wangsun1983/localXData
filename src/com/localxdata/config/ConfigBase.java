@@ -1,3 +1,11 @@
+/** 
+ * 
+ * This Class defines some items which can be set
+ * by user.
+ * 
+ * @author Sunli.Wang
+ *
+ */
 package com.localxdata.config;
 
 public interface ConfigBase {

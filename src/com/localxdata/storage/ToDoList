@@ -17,3 +17,5 @@ Defination
 4.SaveHandler.findDataCellByBlocknum ->Finish
 
 5.We should rewrite the file whose data was changed ->TODO
+
+6.We should use index to Update  data file; ->TODO

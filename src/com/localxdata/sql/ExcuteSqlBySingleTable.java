@@ -8,6 +8,7 @@ import com.localxdata.index.IndexUtil;
 import com.localxdata.storage.DataCellList;
 import com.localxdata.storage.StorageNozzle;
 import com.localxdata.struct.DataCell;
+import com.localxdata.util.LogUtil;
 import com.localxdata.util.PraseSqlUtil;
 import com.localxdata.util.XmlUtil;
 import com.localxdata.util.PraseSqlUtil.Action;
@@ -18,7 +19,8 @@ public class ExcuteSqlBySingleTable {
     
     protected PraseSqlUtil mPraseSqlInstance;
     protected XmlUtil mXmlUtil;
-    //protected static HashMap<String,DataCellList>mTableHashMap;
+    
+    private static String TAG = "ExcuteSqlBySingleTable";
     
     protected static ExcuteSqlBySingleTable mInstance = null;
         
@@ -71,7 +73,7 @@ public class ExcuteSqlBySingleTable {
         DataCellList dataList = StorageNozzle.getDataList(tableName);
         
         if(SqlUtil.canUseIndex(actionList, tableName)) {
-        	list = SqlUtil.checkDataByIndex(dataList, tableName,actionList,SqlUtil.SEARCH_REASON_QUERY);
+        	list = SqlUtil.checkDataByIndex(tableName,actionList,SqlUtil.SEARCH_REASON_QUERY);
         	ArrayList<Object>result = new ArrayList<Object>();
         	for(Object o:list) {
         		result.add(SqlUtil.copyObj(o));
@@ -116,7 +118,9 @@ public class ExcuteSqlBySingleTable {
         //else if there are a few sql actions,but all the actions can be able to
         //excuted by index,we can do query first,then remove the query result..
         if(SqlUtil.canUseIndex(actionList, tableName)) {
-        	deleteList = SqlUtil.checkDataByIndex(dataList, tableName,actionList,SqlUtil.SEARCH_REASON_DEL);
+        	LogUtil.d(TAG, "use index");
+        	
+        	deleteList = SqlUtil.checkDataByIndex(tableName,actionList,SqlUtil.SEARCH_REASON_DEL);
             //    dataList.removeAll(deleteList);
         	for(Object obj :deleteList) {
         		if(obj instanceof DataCell) {
@@ -124,7 +128,6 @@ public class ExcuteSqlBySingleTable {
         		    StorageNozzle.deleteData(tableName, cell);
         		}
         	}
-        	
         } else {
             dataList.enterLooper();
             for(DataCell datacell :dataList) {
@@ -136,6 +139,7 @@ public class ExcuteSqlBySingleTable {
         }
     }
     
+    //This method also need to use index to del.....
     public void delete(Object obj) {
         
         if(obj == null) {
@@ -204,19 +208,33 @@ public class ExcuteSqlBySingleTable {
         
         DataCellList dataList = StorageNozzle.getDataList(tableName);
         
+        ArrayList<Action>actionList = mPraseSqlInstance.changeSqlToAction(sql);
+        
         if(dataList == null) {
             return false;
         }
-        
-        ArrayList<Action>actionList = mPraseSqlInstance.changeSqlToAction(sql);
-        
-        dataList.enterLooper();
-        for(DataCell datacell :dataList) {
-            if(SqlUtil.checkDataByAction(datacell.obj,actionList)) {
-                StorageNozzle.updateData(datacell, data, valueName);
-            }   
-        }
-        dataList.leaveLooper();
+
+        if(SqlUtil.canUseIndex(actionList, tableName)) {
+        	ArrayList<Object> deleteList = new ArrayList<Object>();
+        	
+        	deleteList = SqlUtil.checkDataByIndex(tableName,actionList,SqlUtil.SEARCH_REASON_DEL);
+        	
+        	for(Object obj :deleteList) {
+        		if(obj instanceof DataCell) {
+        			DataCell cell = (DataCell)obj;
+        		    StorageNozzle.updateData(cell, data, valueName);
+        		}
+        	}
+        	
+        } else {
+            dataList.enterLooper();
+            for(DataCell datacell :dataList) {
+                if(SqlUtil.checkDataByAction(datacell.obj,actionList)) {
+                    StorageNozzle.updateData(datacell, data, valueName);
+                }   
+            }
+            dataList.leaveLooper();
+        }        
         
         return true;
     }

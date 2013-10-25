@@ -17,7 +17,7 @@ public class Node<T extends Comparable> {
     Node equalParent;
     ArrayList<Node> equalList;
     boolean color = true;
-    boolean isDelete = false;
+    private boolean isDelete = false;
     
     //if the node was marked as deleted,
     //mVisitRef should be used to record the times
@@ -70,6 +70,10 @@ public class Node<T extends Comparable> {
     
     public boolean isDelete() {
     	return isDelete;
+    }
+    
+    public void reUse() {
+    	isDelete = true;
     }
     
     public void addVisitRef() {

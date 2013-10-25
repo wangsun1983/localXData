@@ -55,10 +55,6 @@ public class IndexUtil {
         this.mIndexMap.put(indexStr, index);
     }
 
-    public void updateIndex(DataCell datacell) {
-        insertIndex(datacell);
-    }
-
     public void insertIndex(DataCell datacell) {
         Field[] fields = datacell.obj.getClass().getFields();
         String table = datacell.obj.getClass().getName();
@@ -67,6 +63,23 @@ public class IndexUtil {
             String fieldName = field.getName();
             IndexTree tree = getIndexTree(table, fieldName);
             
+            try {
+                Comparable ele = (Comparable)field.get(datacell.obj);
+                tree.add(datacell,ele);
+            } catch (IllegalArgumentException e) {
+                e.printStackTrace();
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    
+    public void insertIndex(DataCell datacell,String fieldName) {
+        Field[] fields = datacell.obj.getClass().getFields();
+        String table = datacell.obj.getClass().getName();
+
+        for(Field field:fields) {
+            IndexTree tree = getIndexTree(table, fieldName);
             try {
                 Comparable ele = (Comparable)field.get(datacell.obj);
                 tree.add(datacell,ele);

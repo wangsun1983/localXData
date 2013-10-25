@@ -1,3 +1,11 @@
+/** 
+ * 
+ * This Class providers some interfaces to get/set configs
+ * for user.
+ * 
+ * @author Sunli.Wang
+ *
+ */
 package com.localxdata.config;
 
 import java.io.FileInputStream;
