@@ -10,10 +10,13 @@ import com.localxdata.index.IndexUtil;
 import com.localxdata.index.Node;
 import com.localxdata.sql.SqlUtil;
 import com.localxdata.struct.DataCell;
+import com.localxdata.util.LogUtil;
 import com.localxdata.util.XmlUtil;
 
 public class MemoryData {
     
+	public static final String TAG = "MemoryData";
+	
     //Original Data!!
     private static HashMap<String, DataCellList> mDataListMap;
     
@@ -38,6 +41,7 @@ public class MemoryData {
         if(mDataListMap != null) {
             return;
         }
+        LogUtil.PRINTMEM(TAG, "initSotrage trace3");
         mDataListMap = new HashMap<String, DataCellList>();
             
         //we should make the files in fileTable in order.!!!

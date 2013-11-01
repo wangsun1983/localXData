@@ -1,9 +1,12 @@
 package com.localxdata.test;
 
-public class Test_Class_SmallData_Int {
+import java.io.Serializable;
+
+public class Test_Class_SmallData_Int implements Serializable{
     public int data1;
     public int data2;
     public int data3;
+    
     public int data4;
     public int data5;
     public int data6;
@@ -26,6 +29,7 @@ public class Test_Class_SmallData_Int {
         this.data1 = i;
         this.data2 = i;
         this.data3 = i;
+        
         this.data4 = i;
         this.data5 = i;
         this.data6 = i;

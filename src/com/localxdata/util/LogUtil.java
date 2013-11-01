@@ -13,4 +13,9 @@ public class LogUtil {
     public static void e(String tag,String str) {
         System.out.println("Error: [" + tag + "]" + "," + str);        
     }
+    
+    public static void PRINTMEM(String tag,String trace) {
+    	System.out.println("Memory: [" + tag + "]" + "," 
+    			+ trace + "Mem is " + java.lang.Runtime.getRuntime().totalMemory());
+    }
 }

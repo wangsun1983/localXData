@@ -1,5 +1,10 @@
 package com.localxdata.sql;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -378,6 +383,35 @@ public class SqlUtil {
         }
         
         return retdata;
+    }
+    
+    
+    //copy memory
+    public static Object copyObjMemory(Object obj) {
+    	
+    	ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    	ObjectOutputStream oos;
+		try {
+			oos = new ObjectOutputStream(baos);
+			oos.writeObject(obj);
+	    	byte[] buf = baos.toByteArray();
+	    	oos.flush();
+	    	
+	        ByteArrayInputStream bais = new ByteArrayInputStream(buf);
+	        ObjectInputStream ois = new ObjectInputStream(bais);
+	        Object result =  ois.readObject();
+	        
+	        oos.close();
+	        bais.close();
+	        ois.close();
+	        
+	        return  result;
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    	 
+		return null;
     }
     
     public static void copyField(Field destField,Field srcField,Object destObject,Object srcObject) throws IllegalArgumentException, IllegalAccessException {

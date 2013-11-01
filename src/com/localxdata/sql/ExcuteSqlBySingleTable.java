@@ -74,13 +74,7 @@ public class ExcuteSqlBySingleTable {
         
         if(SqlUtil.canUseIndex(actionList, tableName)) {
         	list = SqlUtil.checkDataByIndex(tableName,actionList,SqlUtil.SEARCH_REASON_QUERY);
-        	ArrayList<Object>result = new ArrayList<Object>();
-        	for(Object o:list) {
-        		result.add(SqlUtil.copyObj(o));
-        	}
-        	
-        	list = null;
-        	list = result;
+        	return (ArrayList<Object>) SqlUtil.copyObjMemory(list);
         }else {
         	ActionTreeNode node = mPraseSqlInstance.changeActionListToTree(actionList);
         	
@@ -194,9 +188,10 @@ public class ExcuteSqlBySingleTable {
         
         String tableName = objList.get(0).getClass().getName();
         
-        for(Object obj:objList) {
-            Object o = SqlUtil.copyObj(obj);    
-            StorageNozzle.insertData(tableName, o);
+        ArrayList<Object>insertList = (ArrayList<Object>)SqlUtil.copyObjMemory(objList);
+        
+        for(Object obj:insertList) { 
+            StorageNozzle.insertData(tableName,obj);
         }
         
         return true;

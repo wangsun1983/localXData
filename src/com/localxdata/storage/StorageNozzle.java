@@ -3,6 +3,7 @@ package com.localxdata.storage;
 import java.util.HashMap;
 
 import com.localxdata.struct.DataCell;
+import com.localxdata.util.LogUtil;
 
 /**
  *This class will provider the interface ~~~
@@ -11,7 +12,9 @@ import com.localxdata.struct.DataCell;
 
 
 public class StorageNozzle {
-       
+      
+	public static final String TAG = "StorageNozzle";
+	
     public static DataCellList getDataList(String className) {
         return MemoryData.getDataList(className);
     }
@@ -49,8 +52,19 @@ public class StorageNozzle {
     }
 
     public static void initStorage() {
+    	
+    	LogUtil.PRINTMEM(TAG, "initSotrage start");
+    	
     	TableControl.init();
+    	
+    	LogUtil.PRINTMEM(TAG, "initSotrage trace1");
+    	
         SaveHandler.getInstance().init();
+        LogUtil.PRINTMEM(TAG, "initSotrage trace2");
+        
         MemoryData.init();
+        LogUtil.PRINTMEM(TAG, "initSotrage trace3");
+        
+        LogUtil.PRINTMEM(TAG, "initSotrage end");
     }
 }
