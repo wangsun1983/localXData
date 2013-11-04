@@ -303,7 +303,7 @@ public class XmlUtil {
         int dataListSize = datalist.size();
         
         DataCellList removeList = new DataCellList();
-
+        StringBuilder dataString = new StringBuilder();        
         datalist.enterLooper();
         for(int i = start;i<= end;i++) {
             
@@ -318,7 +318,7 @@ public class XmlUtil {
             }
             
             countCursor = 0;
-            StringBuffer dataString = new StringBuffer("<data>");
+            dataString.append("<data>");
             dataString.append("<_id attr= " + '"' + "scaler" + '"' + ">");
             dataString.append(dataCell.getId());
             dataString.append("</_id>");
@@ -372,10 +372,10 @@ public class XmlUtil {
                 dataString.append(col.type);
                 dataString.append('"');
                 dataString.append(">");
-                dataString.append(String.valueOf(value));
-                dataString.append(String.valueOf("</"));
-                dataString.append(String.valueOf(col.name));
-                dataString.append(String.valueOf(">"));
+                dataString.append(value);
+                dataString.append("</");
+                dataString.append(col.name);
+                dataString.append(">");
                 
                 //we should remove the data finaly
                 switch(dataCell.getState()) {
@@ -399,6 +399,8 @@ public class XmlUtil {
             out.write(dataBytes);
             out.flush();
             
+            dataString.delete(0, dataString.length());
+            dataString.setLength(0);
         }
         datalist.leaveLooper();
         
@@ -416,6 +418,10 @@ public class XmlUtil {
         if(removeList.size() != 0) {
         	datalist.removeAll(removeList);
         }
+        
+        //StringBuffer needs a lot of memory...
+        //So we should call gc to collect memory
+        System.gc();
         
         return RESULT_WRITE_SUCCESS;
     }
@@ -462,12 +468,14 @@ public class XmlUtil {
         
         Iterator iter = datatableControl.entrySet().iterator();
         
+        StringBuilder dataString = new StringBuilder();
+        
         while (iter.hasNext()) {
             Map.Entry entry = (Map.Entry) iter.next();
             String tab = String.valueOf(entry.getKey());
             DataTableControl val = (DataTableControl)entry.getValue();
 
-            StringBuffer dataString = new StringBuffer("<" + TABLE_ELEMENT_TAG_DATA + ">");
+            dataString.append("<" + TABLE_ELEMENT_TAG_DATA + ">");
             dataString.append("<" + TABLE_ELEMENT_TAG_TAB + ">");
             dataString.append(tab);
             dataString.append("</" + TABLE_ELEMENT_TAG_TAB + ">");
@@ -485,6 +493,8 @@ public class XmlUtil {
             byte[] dataBytes = dataString.toString().getBytes();
             out.write(dataBytes);
             out.flush();
+            dataString.delete(0, dataString.length());
+            dataString.setLength(0);
         }
 
         String finishTag = "</" + TABLE_ELEMENT_TAG_RECORD + ">";
@@ -555,9 +565,13 @@ public class XmlUtil {
     }
     
     public int transformBlockNum(String filename) {
-    	int blockNum = Integer.valueOf(
-    			filename.substring(filename.lastIndexOf("_") + 1, 
-						filename.lastIndexOf(".xml")));
+    	
+    	//because String.substring may make the memory be received difficaultly.
+    	//so we user construct to remove string's reference
+    	String name = new String(filename.substring(filename.lastIndexOf("_") + 1, 
+				filename.lastIndexOf(".xml")));
+    	
+    	int blockNum = Integer.valueOf(name);
     	
     	return blockNum;
     }

@@ -115,7 +115,7 @@ public class PraseSqlUtil {
                     computeAction.mDataType = getDataType(str1PredictResult);
                     if(str1PredictResult == PREDICT_IT_IS_STRING_DATA
                     	||str1PredictResult == PREDICT_IT_IS_LIKE_DATE) {
-                        String modifyStr = str1.substring(1, str1.length() - 1);
+                        String modifyStr = new String(str1.substring(1, str1.length() - 1));
                         computeAction.mData = modifyStr;
                     }
                     
@@ -131,7 +131,7 @@ public class PraseSqlUtil {
                     computeAction.mDataType = getDataType(str2PredictResult);
                     if(str2PredictResult == PREDICT_IT_IS_STRING_DATA || 
                     		str2PredictResult == PREDICT_IT_IS_LIKE_DATE) {
-                        String modifyStr = str2.substring(1, str2.length() - 2);
+                        String modifyStr = new String(str2.substring(1, str2.length() - 2));
                         computeAction.mData = modifyStr;
                     }
                     
@@ -609,7 +609,7 @@ public class PraseSqlUtil {
         	}
         }
         
-        return String.valueOf(regxNewCharArray).substring(0, regxCountNew);
+        return new String(String.valueOf(regxNewCharArray).substring(0, regxCountNew));
     }
     
     public class Action {

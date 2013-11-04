@@ -981,8 +981,8 @@ public class SqlUtil {
     	    	break;
     	    }	
     	}
-    	result[MULTI_CLASS_FIELD] = field.substring(0, size);
-    	result[MULTI_MEMBER_FIELD] = field.substring(size + 1, args.length);
+    	result[MULTI_CLASS_FIELD] = new String(field.substring(0, size));
+    	result[MULTI_MEMBER_FIELD] = new String(field.substring(size + 1, args.length));
     	
     	return result;
     }
