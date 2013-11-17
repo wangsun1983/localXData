@@ -43,6 +43,10 @@ public class DataCell {
     }
     
     public void addNode(String indexName,Node node) {
+    	if(nodeMap == null) {
+    		nodeMap = new HashMap<String,Node>();
+    	}
+    	
     	nodeMap.put(indexName, node);
     }
     

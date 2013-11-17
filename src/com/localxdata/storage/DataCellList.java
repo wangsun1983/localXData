@@ -2,6 +2,13 @@ package com.localxdata.storage;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
 import com.localxdata.struct.DataCell;
 import com.localxdata.util.LogUtil;
@@ -23,53 +30,28 @@ import com.localxdata.util.LogUtil;
  *       can break remove function (TODO)
  * */
 
-public class DataCellList extends ArrayList<DataCell>{
+public class DataCellList {
     
 	public static final String TAG = "DataCellList";
-	
-    private static final long serialVersionUID = 1L;
+
+    private List<DataCell> list;
+    private ReentrantReadWriteLock rwl;
+    private ReadLock mReadLock;
+    private WriteLock mWriteLock;
     
-    private int currentInLoop = 0;
-    private int currentInRemoving = 0;
-    
-    private Object mWaitForLoopObj = new Object();
-    private Object mWaitForRemoveAddObj = new Object();
-    
-    private int size = 0;
-    private DataCell mLastCell;
-    
-    public void enterLooper() {
-    	
-    	//DebugThread debugThread = new DebugThread();
-    	//debugThread.start();
-    	
-    	if(currentInRemoving != 0) {
-    		try {
-    			synchronized(mWaitForRemoveAddObj) {
-    			    mWaitForRemoveAddObj.wait();
-    			}
-			} catch (InterruptedException e) {
-				LogUtil.e(TAG, "setRemovingFlag error" + e.toString());
-			}
-    	}
-    	
-    	currentInLoop++;
+    public DataCellList() {
+    	 list = Collections.synchronizedList(new ArrayList<DataCell>());
+         rwl = new ReentrantReadWriteLock();
+         mReadLock = rwl.readLock();
+         mWriteLock = rwl.writeLock();
     }
     
-    public void leaveLooper() {
-    	currentInLoop--;
-    	
-    	if(currentInLoop == 0) {
-    		synchronized(mWaitForLoopObj) {
-    	        mWaitForLoopObj.notify();
-    		}
-	    }
-    }
     
     public boolean add(DataCell data) {
-        setRemoveAddFlag();
-        boolean result = super.add(data);
-        clearRemoveAddFlag();
+        //setRemoveAddFlag();
+    	mWriteLock.lock();
+        boolean result = list.add(data);
+        mWriteLock.unlock();
         
         return result;
     }
@@ -94,14 +76,9 @@ public class DataCellList extends ArrayList<DataCell>{
     }
     
     public boolean remove(DataCell cell) {
-    	setRemoveAddFlag();
-    	boolean result = super.remove(cell);
-    	size--;
-    	
-    	if(mLastCell == cell) {
-    		mLastCell = get(size - 1);
-    	}
-    	clearRemoveAddFlag();
+    	mWriteLock.lock();
+    	boolean result = list.remove(cell);
+    	mWriteLock.unlock();
     	return result;
     }
     
@@ -111,89 +88,69 @@ public class DataCellList extends ArrayList<DataCell>{
     }
     
     public void removeAll(DataCellList list) {
-    	setRemoveAddFlag();
-    	super.removeAll(list);
-    	
-    	size = size - list.size();
-    	
-    	if(list.indexOf(mLastCell) < 0) {
-    		mLastCell = get(size - 1);
-    	}
-    	
-    	clearRemoveAddFlag();
+    	mWriteLock.lock();
+    	list.removeAll(list);
+    	mWriteLock.unlock();
     }
     
     public boolean removeAll(Collection<?> c) {
-    	setRemoveAddFlag();
-    	boolean result = super.removeAll(c);
-    	clearRemoveAddFlag();
+    	mWriteLock.lock();
+    	boolean result = list.removeAll(c);
+    	mWriteLock.unlock();
     	
     	return result;
     }
     
     //we use this method to do.......
     public DataCell insertDataCell(Object obj) {
-    	setRemoveAddFlag();
+    	mWriteLock.lock();
         DataCell d = new DataCell(obj);
-        super.add(d);
-                
+        
         int maxid = 0;
-    	if(size != 0) {
-    		maxid = mLastCell.getId() + 1;
-    	}else {
-    		maxid = 0;
-    	}
-    	
-    	d.setId(maxid);
-    	mLastCell = d;
-    	size++;
-    	clearRemoveAddFlag();
+        int size = list.size();
+        if(size != 0) {
+        	maxid = list.get(size - 1).getId() + 1;
+        }else {
+        	maxid = 0;
+        }
+        
+        d.setId(maxid);
+        list.add(d);
+    	mWriteLock.unlock();
     	return d;
     }
        
-    public int size() {
-        return size;
+    public DataCell get(int index) {
+    	return list.get(index);
     }
     
-    private void setRemoveAddFlag() {
-    	if(currentInLoop != 0) {
-    		try {
-    			synchronized(mWaitForLoopObj) {
-				    mWaitForLoopObj.wait();
-    			}
-			} catch (InterruptedException e) {
-				LogUtil.e(TAG, "setRemovingFlag error" + e.toString());
-			}
+    public int size() {
+        return list.size();
+    }
+    
+    public void startLoopRead() {
+    	this.mReadLock.lock();
+    }
+    
+    public void finishLoopRead() {
+    	this.mReadLock.unlock();
+    }
+    
+    public Iterator<DataCell> getIterator() {
+    	return this.list.iterator();
+    }
+    
+    public int indexOf(DataCell cell) {
+    	startLoopRead();
+    	int length = list.size();
+    	for(int i = 0;i < length;i++) {
+    		if(list.get(i) == cell) {
+    			finishLoopRead();
+    			return i;
+    		}
     	}
     	
-    	currentInRemoving++;
-    }
-    
-    private void clearRemoveAddFlag() {
-    	currentInRemoving--;
-    	if(currentInRemoving == 0) {
-    		synchronized(mWaitForRemoveAddObj) {
-    		    mWaitForRemoveAddObj.notify();
-    		}
-    	}
-    }
-    
-    public void dump() {
-    	LogUtil.d(TAG, "currentInLoop is " + currentInLoop);
-    	LogUtil.d(TAG, "currentInRemoving is " + currentInRemoving);
-    }
-    
-    class DebugThread extends Thread {
-    	public void run() {
-    		while(true) {
-    		    dump();
-    		    try {
-				    Thread.sleep(1000);
-			    } catch (InterruptedException e) {
-				    // TODO Auto-generated catch block
-				    e.printStackTrace();
-			    }
-    		}
-    	}
+    	finishLoopRead();
+    	return -1;
     }
 }

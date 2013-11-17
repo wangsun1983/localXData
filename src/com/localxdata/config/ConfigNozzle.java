@@ -48,4 +48,12 @@ public class ConfigNozzle implements ConfigBase{
     	return DATA_FILE_RECORD_NUM;
     }    
     
+    public static int getWorkThreadPoolSize() {
+    	String value = (String) props.get(CONFIG_WORK_THREAD_POOL_SIZE);
+    	if(value != null) {
+    	    return Integer.valueOf(value);
+    	}
+    	
+    	return WORK_THREAD_POOL_SIZE;
+    }
 }

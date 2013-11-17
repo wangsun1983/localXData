@@ -72,11 +72,13 @@ public class ExcuteSqlByMultiTable {
         
         HashMap <String,Integer>cursorMap = new HashMap<String,Integer>();
         
+        /*TODO!!!!!!!!
         for(String table:tableName) {
         	ArrayList<DataCell> data = StorageNozzle.getDataList(table);
             cursorMap.put(table, data.size() - 1);
             dataList.add(data);
         }
+        */
         
         LogUtil.d(DEBUG_TAG,"query start at:" + System.currentTimeMillis());
         

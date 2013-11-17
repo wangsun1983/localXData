@@ -10,7 +10,7 @@ public class Test_ExcuteSql_Int implements TestInf {
     private ExcuteSqlBySingleTable sqlExcute = ExcuteSqlBySingleTable
             .getInstance();
     
-    private static final int TEST_RECORDS = 5000;
+    private static final int TEST_RECORDS = 50000;
 
     public void Test_create_Data(int times) {
     	ArrayList<Object>listD = getDatalist();   
@@ -33,6 +33,15 @@ public class Test_ExcuteSql_Int implements TestInf {
         System.out.println(getClass() + ":Test_create end at "
                 + System.currentTimeMillis());
         
+        
+        System.out.println(getClass() + ":Test_create start again at "
+                + System.currentTimeMillis());
+        
+        ArrayList<Object>listAgain = getDatalist();
+        
+        System.out.println("listAgain size is " + listAgain.size());
+        System.out.println(getClass() + ":Test_create start again at "
+                + System.currentTimeMillis());
         //check
     }
 
@@ -231,7 +240,7 @@ public class Test_ExcuteSql_Int implements TestInf {
     public void startTest() {
     	System.out.println("-------------start Test_ExcuteSql_Int--------------- ");
     	
-        //Test_create_Data(TEST_RECORDS);
+        Test_create_Data(TEST_RECORDS);
         
         if(Test_Query_Data_Equal_1()) {
             System.out.println(getClass() + ":Test_Query_Data_Equal_1 OK");	

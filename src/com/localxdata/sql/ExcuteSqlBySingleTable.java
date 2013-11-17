@@ -3,6 +3,12 @@ package com.localxdata.sql;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import com.localxdata.index.IndexUtil;
 import com.localxdata.storage.DataCellList;
@@ -44,19 +50,43 @@ public class ExcuteSqlBySingleTable {
     	//ArrayList<Object>dataList = mXmlUtil.LoadXml_Sax(tableName);
         DataCellList dataList = StorageNozzle.getDataList(tableName);
     	
-    	ArrayList<Object> list = new ArrayList<Object>();
+    	final ArrayList<Object> list = new ArrayList<Object>();
+    	
+    	final Queue<Object>queue = new ConcurrentLinkedQueue<Object>(); 
+    	//wangsl use parallel
+    	ExecutorService exec = Executors.newFixedThreadPool(10);
+    	
     	
     	if(dataList != null) {
-    	    dataList.enterLooper();
-    	    for(DataCell dataCell :dataList) {
-    	    	if(dataCell.getState() != DataCell.DATA_DELETE) {
-                    list.add(SqlUtil.copyObj(dataCell.obj));
+    	    dataList.startLoopRead();
+    	    Iterator<DataCell> iterator = dataList.getIterator();
+    	    while(iterator.hasNext()) {
+    	    	final DataCell cell = iterator.next();
+    	    	if(cell.getState() != DataCell.DATA_DELETE) {
+                    //list.add(SqlUtil.copyObj(dataCell.obj));
+    	    		exec.execute(new Runnable() {
+						@Override
+						public void run() {
+							queue.add(SqlUtil.copyObj(cell.obj));
+						}
+    	    			
+    	    		});
     	    	}
-            }
-    	    dataList.leaveLooper();
+    	    }
+    	    
+    	    dataList.finishLoopRead();
     	}
-
-    	return list;
+    	//wangsl use parallel
+    	
+    	exec.shutdown();
+    	try {
+			exec.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    	
+    	return new ArrayList(queue);
     }
     
     public ArrayList<Object> query(String tableName,String sql) {
@@ -78,17 +108,21 @@ public class ExcuteSqlBySingleTable {
         }else {
         	ActionTreeNode node = mPraseSqlInstance.changeActionListToTree(actionList);
         	
-            dataList.enterLooper();
-            for(DataCell datacell :dataList) {
-                if(datacell.getState() == DataCell.DATA_DELETE) {
+            dataList.startLoopRead();
+            Iterator<DataCell>iterator = dataList.getIterator();
+            
+            while(iterator.hasNext()) {
+            	DataCell datacell = iterator.next();
+            	if(datacell.getState() == DataCell.DATA_DELETE) {
                     continue;
                 }
               
                 if(SqlUtil.checkDataByTree(datacell.obj,node)) {
                     list.add(SqlUtil.copyObj(datacell.obj));
-                }   
+                }
             }
-            dataList.leaveLooper();
+            
+            dataList.finishLoopRead();
         }
         
         return list;
@@ -123,13 +157,16 @@ public class ExcuteSqlBySingleTable {
         		}
         	}
         } else {
-            dataList.enterLooper();
-            for(DataCell datacell :dataList) {
-                if(SqlUtil.checkDataByAction(datacell.obj,actionList)) {
+            dataList.startLoopRead();
+            
+            Iterator<DataCell>iterator = dataList.getIterator();
+            while(iterator.hasNext()) {
+            	DataCell datacell = iterator.next();
+            	if(SqlUtil.checkDataByAction(datacell.obj,actionList)) {
                     StorageNozzle.deleteData(tableName, datacell);
-                }   
+                } 
             }
-            dataList.leaveLooper();
+            dataList.finishLoopRead();
         }
     }
     
@@ -148,9 +185,12 @@ public class ExcuteSqlBySingleTable {
         Field[]fields1 = obj.getClass().getDeclaredFields();
         int length = fields1.length;
         
-        dataList.enterLooper();
-        for(DataCell datacell :dataList) {
-            boolean isTheData = true;
+        dataList.startLoopRead();
+        Iterator<DataCell>iterator = dataList.getIterator();
+        
+        while(iterator.hasNext()) {
+        	boolean isTheData = true;
+        	DataCell datacell = iterator.next();
             Field[] fields2 = datacell.obj.getClass().getDeclaredFields();
             for(int i = 0; i < length;i++) {
                 if(SqlUtil.compareField(datacell.obj,obj,fields2[i],fields1[i],Action.SQL_ACTION_EQUAL)) {
@@ -165,7 +205,8 @@ public class ExcuteSqlBySingleTable {
                 StorageNozzle.deleteData(className, datacell);
             }
         }
-        dataList.leaveLooper();
+        
+        dataList.finishLoopRead();
     }
     
     public boolean insert(Object obj) {
@@ -222,13 +263,16 @@ public class ExcuteSqlBySingleTable {
         	}
         	
         } else {
-            dataList.enterLooper();
-            for(DataCell datacell :dataList) {
-                if(SqlUtil.checkDataByAction(datacell.obj,actionList)) {
+            dataList.startLoopRead();
+            Iterator<DataCell>iterator = dataList.getIterator();
+            while(iterator.hasNext()) {
+            	DataCell datacell = iterator.next();
+            	if(SqlUtil.checkDataByAction(datacell.obj,actionList)) {
                     StorageNozzle.updateData(datacell, data, valueName);
-                }   
+                } 
             }
-            dataList.leaveLooper();
+            
+            dataList.finishLoopRead();
         }        
         
         return true;

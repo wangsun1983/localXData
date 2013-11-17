@@ -304,7 +304,7 @@ public class XmlUtil {
         
         DataCellList removeList = new DataCellList();
         StringBuilder dataString = new StringBuilder();        
-        datalist.enterLooper();
+        datalist.startLoopRead();
         for(int i = start;i<= end;i++) {
             
             if(i >= dataListSize) {
@@ -397,12 +397,13 @@ public class XmlUtil {
 
             byte[] dataBytes = dataString.toString().getBytes();
             out.write(dataBytes);
+
             out.flush();
             
             dataString.delete(0, dataString.length());
             dataString.setLength(0);
         }
-        datalist.leaveLooper();
+        datalist.finishLoopRead();
         
         String finishTag = "</" + className + ">";
         byte[] FINISH_TAG_BYTE = finishTag.getBytes();
@@ -493,6 +494,7 @@ public class XmlUtil {
             byte[] dataBytes = dataString.toString().getBytes();
             out.write(dataBytes);
             out.flush();
+            
             dataString.delete(0, dataString.length());
             dataString.setLength(0);
         }
