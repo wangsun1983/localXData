@@ -89,7 +89,7 @@ public class DataCellList {
     
     public void removeAll(DataCellList list) {
     	mWriteLock.lock();
-    	list.removeAll(list);
+    	this.list.removeAll(list.list);
     	mWriteLock.unlock();
     }
     

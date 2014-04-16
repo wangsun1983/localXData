@@ -6,10 +6,10 @@ import java.util.HashMap;
 import com.localxdata.index.Node;
 
 public class DataCell {
-    public static final int DATA_IDLE = 0;
-    public static final int DATA_UPDATE = 1;
-    public static final int DATA_DELETE = 2;
-    public static final int DATA_INSERT = 3;
+    public static final byte DATA_IDLE = 0;
+    public static final byte DATA_UPDATE = 1;
+    public static final byte DATA_DELETE = 2;
+    public static final byte DATA_INSERT = 3;
     
     private int dataState = DATA_INSERT;
     private int id = 0;
@@ -22,8 +22,6 @@ public class DataCell {
     
     public DataCell(Object obj) {
         this.obj = obj;
-        
-        nodeMap = new HashMap<String,Node>();
     }
     
     public void setId(int id) {
